@@ -1,20 +1,34 @@
-import 'dart:typed_data';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:video_player/video_player.dart';
 
 import '../Cubit/photo_cubit.dart';
+import '../Items/media_item.dart';
 import '../State/photo_state.dart';
 
 class PhotoScreen extends StatelessWidget {
-  const PhotoScreen({super.key});
+  const PhotoScreen({
+    super.key,
+    required this.onLoad,
+  });
+
+  /// LOAD FUNCTION FROM HOME
+  final Future<void> Function(PhotoCubit cubit) onLoad;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => PhotoCubit()..loadPhotos(),
+      create: (_) {
+        final cubit = PhotoCubit();
+
+        onLoad(cubit);
+
+        return cubit;
+      },
       child: const _PhotoScreenBody(),
     );
   }
@@ -24,10 +38,12 @@ class _PhotoScreenBody extends StatefulWidget {
   const _PhotoScreenBody();
 
   @override
-  State<_PhotoScreenBody> createState() => _PhotoScreenBodyState();
+  State<_PhotoScreenBody> createState() =>
+      _PhotoScreenBodyState();
 }
 
-class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
+class _PhotoScreenBodyState
+    extends State<_PhotoScreenBody> {
   double dragX = 0;
 
   final double swipeThreshold = 120;
@@ -80,10 +96,12 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
               );
             }
 
-            final currentPhoto = state.photos[state.currentIndex];
+            final MediaItem currentPhoto =
+                state.photos[state.currentIndex];
 
             final dragPercent =
-                (dragX.abs() / swipeThreshold).clamp(0.0, 1.0);
+                (dragX.abs() / swipeThreshold)
+                    .clamp(0.0, 1.0);
 
             final totalAction =
                 state.keepCount + state.deleteCount;
@@ -107,11 +125,14 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                       /// BACK
                       _circleButton(
                         icon:
-                            Icons.arrow_back_ios_new_rounded,
+                            Icons
+                                .arrow_back_ios_new_rounded,
                         scale: scale,
                         opacity: 1,
                         onTap: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(
+                            context,
+                          ).pop();
                         },
                       ),
 
@@ -119,22 +140,29 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                         child: Column(
                           children: [
                             Text(
-                              "SWIPEWIPE",
+                              _timeAgo(
+                                currentPhoto.createdAt,
+                              ),
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 24 * scale,
-                                fontWeight: FontWeight.w900,
+                                fontWeight:
+                                    FontWeight.w900,
                                 letterSpacing: -1,
                               ),
                             ),
 
-                            SizedBox(height: 2 * scale),
+                            SizedBox(
+                              height: 2 * scale,
+                            ),
 
                             Text(
                               "${state.currentIndex + 1}/${state.photos.length} • ${(progress * 100).toInt()}%",
                               style: TextStyle(
-                                color: Colors.white38,
-                                fontSize: 15 * scale,
+                                color:
+                                    Colors.white38,
+                                fontSize:
+                                    15 * scale,
                                 fontWeight:
                                     FontWeight.w700,
                               ),
@@ -145,10 +173,13 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
 
                       /// UNDO
                       _circleButton(
-                        icon: Icons.refresh_rounded,
+                        icon:
+                            Icons.refresh_rounded,
                         scale: scale,
                         opacity:
-                            state.hasAction ? 1 : 0.25,
+                            state.hasAction
+                                ? 1
+                                : 0.25,
                         onTap: () {
                           context
                               .read<PhotoCubit>()
@@ -172,7 +203,8 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                       });
                     },
                     onPanEnd: (_) {
-                      if (dragX < -swipeThreshold) {
+                      if (dragX <
+                          -swipeThreshold) {
                         context
                             .read<PhotoCubit>()
                             .deletePhoto();
@@ -188,67 +220,50 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                       });
                     },
                     child: AnimatedContainer(
-                      duration: const Duration(
+                      duration:
+                          const Duration(
                         milliseconds: 180,
                       ),
                       curve: Curves.easeOut,
-                      transform: Matrix4.identity()
-                        ..translate(dragX)
-                        ..rotateZ(dragX * 0.0007),
+                      transform:
+                          Matrix4.identity()
+                            ..translate(dragX)
+                            ..rotateZ(
+                              dragX * 0.0007,
+                            ),
                       width: size.width * 0.97,
                       height: size.height * 0.7,
                       decoration: BoxDecoration(
                         borderRadius:
                             BorderRadius.circular(
-                                34 * scale),
+                              34 * scale,
+                            ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black
-                                .withOpacity(0.45),
+                                .withOpacity(
+                                  0.45,
+                                ),
                             blurRadius: 40,
                             offset:
-                                const Offset(0, 20),
+                                const Offset(
+                                  0,
+                                  20,
+                                ),
                           ),
                         ],
                       ),
                       child: ClipRRect(
                         borderRadius:
                             BorderRadius.circular(
-                                34 * scale),
+                              34 * scale,
+                            ),
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            /// IMAGE
-                            FutureBuilder<Uint8List?>(
-                              future:
-                                  currentPhoto.thumbnailDataWithSize(
-                                const ThumbnailSize(
-                                  1200,
-                                  1200,
-                                ),
-                              ),
-                              builder:
-                                  (context, snapshot) {
-                                if (!snapshot
-                                    .hasData) {
-                                  return Container(
-                                    color: Colors.black,
-                                    child:
-                                        const Center(
-                                      child:
-                                          CircularProgressIndicator(
-                                        color:
-                                            Colors.white,
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                return Image.memory(
-                                  snapshot.data!,
-                                  fit: BoxFit.cover,
-                                );
-                              },
+                            /// MEDIA
+                            _MediaViewer(
+                              item: currentPhoto,
                             ),
 
                             /// BLUR WHEN DRAGGING
@@ -256,16 +271,20 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                               BackdropFilter(
                                 filter:
                                     ImageFilter.blur(
-                                  sigmaX:
-                                      dragPercent * 4,
-                                  sigmaY:
-                                      dragPercent * 4,
-                                ),
+                                      sigmaX:
+                                          dragPercent *
+                                          4,
+                                      sigmaY:
+                                          dragPercent *
+                                          4,
+                                    ),
                                 child: Container(
-                                  color: Colors.black
+                                  color: Colors
+                                      .black
                                       .withOpacity(
-                                    dragPercent * 0.2,
-                                  ),
+                                        dragPercent *
+                                            0.2,
+                                      ),
                                 ),
                               ),
 
@@ -273,65 +292,76 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                             Container(
                               decoration:
                                   BoxDecoration(
-                                gradient:
-                                    LinearGradient(
-                                  begin:
-                                      Alignment
-                                          .topCenter,
-                                  end: Alignment
-                                      .bottomCenter,
-                                  colors: [
-                                    Colors.black
-                                        .withOpacity(
-                                            0.3),
-                                    Colors
-                                        .transparent,
-                                    Colors.black
-                                        .withOpacity(
-                                            0.22),
-                                  ],
-                                ),
-                              ),
+                                    gradient:
+                                        LinearGradient(
+                                          begin:
+                                              Alignment
+                                                  .topCenter,
+                                          end:
+                                              Alignment
+                                                  .bottomCenter,
+                                          colors: [
+                                            Colors
+                                                .black
+                                                .withOpacity(
+                                                  0.3,
+                                                ),
+                                            Colors
+                                                .transparent,
+                                            Colors
+                                                .black
+                                                .withOpacity(
+                                                  0.22,
+                                                ),
+                                          ],
+                                        ),
+                                  ),
                             ),
 
                             /// DELETE OVERLAY
                             if (isDraggingLeft)
                               Positioned(
                                 top: 50 * scale,
-                                left: 28 * scale,
+                                left:
+                                    28 * scale,
                                 child:
                                     Transform.rotate(
-                                  angle: -0.18,
-                                  child:
-                                      _actionOverlay(
-                                    text: "DELETE",
-                                    color:
-                                        const Color(
-                                      0xFFB57BFF,
+                                      angle: -0.18,
+                                      child:
+                                          _actionOverlay(
+                                            text:
+                                                "DELETE",
+                                            color:
+                                                const Color(
+                                                  0xFFB57BFF,
+                                                ),
+                                            scale:
+                                                scale,
+                                          ),
                                     ),
-                                    scale: scale,
-                                  ),
-                                ),
                               ),
 
                             /// KEEP OVERLAY
                             if (isDraggingRight)
                               Positioned(
                                 top: 50 * scale,
-                                right: 28 * scale,
+                                right:
+                                    28 * scale,
                                 child:
                                     Transform.rotate(
-                                  angle: 0.18,
-                                  child:
-                                      _actionOverlay(
-                                    text: "KEEP",
-                                    color:
-                                        const Color(
-                                      0xFF7DFFA7,
+                                      angle: 0.18,
+                                      child:
+                                          _actionOverlay(
+                                            text:
+                                                "KEEP",
+                                            color:
+                                                const Color(
+                                                  0xFF7DFFA7,
+                                                ),
+                                            scale:
+                                                scale,
+                                          ),
                                     ),
-                                    scale: scale,
-                                  ),
-                                ),
                               ),
                           ],
                         ),
@@ -349,35 +379,44 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                       milliseconds: 160,
                     ),
                     opacity:
-                        dragPercent > 0 ? 0 : 1,
+                        dragPercent > 0
+                            ? 0
+                            : 1,
                     child: Column(
                       children: [
                         _sideIcon(
-                          Icons.favorite_border_rounded,
+                          Icons
+                              .favorite_border_rounded,
                           scale,
                         ),
 
                         SizedBox(
-                            height: 14 * scale),
+                          height: 14 * scale,
+                        ),
 
                         _sideIcon(
-                          Icons.bookmark_border_rounded,
+                          Icons
+                              .bookmark_border_rounded,
                           scale,
                         ),
 
                         SizedBox(
-                            height: 14 * scale),
+                          height: 14 * scale,
+                        ),
 
                         _sideIcon(
-                          Icons.ios_share_rounded,
+                          Icons
+                              .ios_share_rounded,
                           scale,
                         ),
 
                         SizedBox(
-                            height: 14 * scale),
+                          height: 14 * scale,
+                        ),
 
                         _sideIcon(
-                          Icons.auto_awesome_rounded,
+                          Icons
+                              .auto_awesome_rounded,
                           scale,
                         ),
                       ],
@@ -404,8 +443,8 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                                 style: TextStyle(
                                   color:
                                       const Color(
-                                    0xFFB57BFF,
-                                  ),
+                                        0xFFB57BFF,
+                                      ),
                                   fontSize:
                                       28 * scale,
                                   fontWeight:
@@ -415,7 +454,8 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                               ),
 
                               SizedBox(
-                                height: 6 * scale,
+                                height:
+                                    6 * scale,
                               ),
 
                               Text(
@@ -424,8 +464,8 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                                 style: TextStyle(
                                   color:
                                       const Color(
-                                    0xFFB57BFF,
-                                  ),
+                                        0xFFB57BFF,
+                                      ),
                                   fontSize:
                                       18 * scale,
                                   fontWeight:
@@ -443,8 +483,8 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                                 style: TextStyle(
                                   color:
                                       const Color(
-                                    0xFF7DFFA7,
-                                  ),
+                                        0xFF7DFFA7,
+                                      ),
                                   fontSize:
                                       28 * scale,
                                   fontWeight:
@@ -454,7 +494,8 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                               ),
 
                               SizedBox(
-                                height: 6 * scale,
+                                height:
+                                    6 * scale,
                               ),
 
                               Text(
@@ -463,8 +504,8 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
                                 style: TextStyle(
                                   color:
                                       const Color(
-                                    0xFF7DFFA7,
-                                  ),
+                                        0xFF7DFFA7,
+                                      ),
                                   fontSize:
                                       18 * scale,
                                   fontWeight:
@@ -479,93 +520,114 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
 
                       if (state.hasAction)
                         SizedBox(
-                            height: 18 * scale),
+                          height: 18 * scale,
+                        ),
 
                       /// PROGRESS BAR
                       if (state.hasAction)
                         ClipRRect(
                           borderRadius:
                               BorderRadius.circular(
-                            100,
-                          ),
+                                100,
+                              ),
                           child: SizedBox(
-                            height: 14 * scale,
+                            height:
+                                14 * scale,
                             width:
                                 double.infinity,
-                            child: LayoutBuilder(
-                              builder: (
-                                context,
-                                constraints,
-                              ) {
-                                final total =
-                                    state.deleteCount +
+                            child:
+                                LayoutBuilder(
+                                  builder: (
+                                    context,
+                                    constraints,
+                                  ) {
+                                    final total =
+                                        state.deleteCount +
                                         state
                                             .keepCount;
 
-                                final deleteWidth =
-                                    total == 0
-                                        ? constraints
-                                                .maxWidth /
-                                            2
-                                        : constraints
-                                                .maxWidth *
-                                            (state.deleteCount /
-                                                total);
+                                    final deleteWidth =
+                                        total ==
+                                                0
+                                            ? constraints.maxWidth /
+                                                2
+                                            : constraints.maxWidth *
+                                                (state.deleteCount /
+                                                    total);
 
-                                final keepWidth =
-                                    total == 0
-                                        ? constraints
-                                                .maxWidth /
-                                            2
-                                        : constraints
-                                                .maxWidth *
-                                            (state.keepCount /
-                                                total);
+                                    final keepWidth =
+                                        total ==
+                                                0
+                                            ? constraints.maxWidth /
+                                                2
+                                            : constraints.maxWidth *
+                                                (state.keepCount /
+                                                    total);
 
-                                return Row(
-                                  children: [
-                                    AnimatedContainer(
-                                      duration:
-                                          const Duration(
-                                        milliseconds:
-                                            220,
-                                      ),
-                                      width:
-                                          deleteWidth,
-                                      color:
-                                          const Color(
-                                        0xFFB57BFF,
-                                      ),
-                                    ),
+                                    return Row(
+                                      children: [
+                                        AnimatedContainer(
+                                          duration:
+                                              const Duration(
+                                                milliseconds:
+                                                    220,
+                                              ),
+                                          width:
+                                              deleteWidth,
+                                          color:
+                                              const Color(
+                                                0xFFB57BFF,
+                                              ),
+                                        ),
 
-                                    AnimatedContainer(
-                                      duration:
-                                          const Duration(
-                                        milliseconds:
-                                            220,
-                                      ),
-                                      width:
-                                          keepWidth,
-                                      color:
-                                          const Color(
-                                        0xFF7DFFA7,
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
+                                        AnimatedContainer(
+                                          duration:
+                                              const Duration(
+                                                milliseconds:
+                                                    220,
+                                              ),
+                                          width:
+                                              keepWidth,
+                                          color:
+                                              const Color(
+                                                0xFF7DFFA7,
+                                              ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
                           ),
-                        )
+                        ),
                     ],
                   ),
-                )
+                ),
               ],
             );
           },
         ),
       ),
     );
+  }
+
+  String _timeAgo(DateTime date) {
+    final diff = DateTime.now().difference(
+      date,
+    );
+
+    if (diff.inSeconds < 60) {
+      return "${diff.inSeconds}s ago";
+    }
+
+    if (diff.inMinutes < 60) {
+      return "${diff.inMinutes}m ago";
+    }
+
+    if (diff.inHours < 24) {
+      return "${diff.inHours}h ago";
+    }
+
+    return "${diff.inDays}d ago";
   }
 
   Widget _circleButton({
@@ -577,16 +639,21 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 180),
+        duration: const Duration(
+          milliseconds: 180,
+        ),
         opacity: opacity,
         child: Container(
           width: 58 * scale,
           height: 58 * scale,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.white.withOpacity(
+              0.08,
+            ),
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white
+                  .withOpacity(0.05),
             ),
           ),
           child: Icon(
@@ -607,10 +674,13 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
       width: 48 * scale,
       height: 48 * scale,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.28),
+        color: Colors.black.withOpacity(
+          0.28,
+        ),
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.white.withOpacity(0.08),
+          color:
+              Colors.white.withOpacity(0.08),
         ),
       ),
       child: Icon(
@@ -636,9 +706,10 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
           color: color,
           width: 4,
         ),
-        borderRadius: BorderRadius.circular(
-          16 * scale,
-        ),
+        borderRadius:
+            BorderRadius.circular(
+              16 * scale,
+            ),
       ),
       child: Text(
         text,
@@ -649,5 +720,102 @@ class _PhotoScreenBodyState extends State<_PhotoScreenBody> {
         ),
       ),
     );
+  }
+}
+
+class _MediaViewer extends StatefulWidget {
+  const _MediaViewer({
+    required this.item,
+  });
+
+  final MediaItem item;
+
+  @override
+  State<_MediaViewer> createState() =>
+      _MediaViewerState();
+}
+
+class _MediaViewerState
+    extends State<_MediaViewer> {
+  VideoPlayerController? controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    if (!widget.item.isVideo &&
+        !widget.item.isLivePhoto) {
+      return;
+    }
+
+    final File? file =
+        await widget.item.asset.file;
+
+    if (file == null) return;
+
+    controller =
+        VideoPlayerController.file(file);
+
+    await controller!.initialize();
+
+    controller!
+      ..setLooping(true)
+      ..play();
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    /// VIDEO / LIVE PHOTO
+    if ((widget.item.isVideo ||
+            widget.item.isLivePhoto) &&
+        controller != null &&
+        controller!.value.isInitialized) {
+      return FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width:
+              controller!.value.size.width,
+          height:
+              controller!.value.size.height,
+          child: VideoPlayer(controller!),
+        ),
+      );
+    }
+
+    /// IMAGE
+if (widget.item.thumbnail == null) {
+  return Container(
+    color: Colors.black,
+    child: const Center(
+      child: Icon(
+        Icons.video_library_rounded,
+        color: Colors.white54,
+        size: 70,
+      ),
+    ),
+  );
+}
+
+return Image.memory(
+  widget.item.thumbnail!,
+  fit: BoxFit.cover,
+  gaplessPlayback: true,
+  filterQuality: FilterQuality.low,
+);
   }
 }

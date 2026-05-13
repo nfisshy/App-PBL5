@@ -56,12 +56,12 @@ class ToolTab extends StatelessWidget {
             label: item.title,
             icon: item.icon,
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const PhotoScreen(),
-                ),
-              );
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (_) => const PhotoScreen(),
+              //   ),
+              // );
             },
           ),
       ],

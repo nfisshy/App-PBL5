@@ -1,18 +1,23 @@
 import 'package:equatable/equatable.dart';
-import 'package:photo_manager/photo_manager.dart';
+
+import '../Items/media_item.dart';
 
 class PhotoState extends Equatable {
   final bool isLoading;
   final bool loadFail;
   final bool loadSuccess;
 
-  final List<AssetEntity> photos;
+  /// MEDIA LIST
+  final List<MediaItem> photos;
 
+  /// CURRENT INDEX
   final int currentIndex;
 
+  /// ACTION COUNTS
   final int deleteCount;
   final int keepCount;
 
+  /// HAS UNDO
   final bool hasAction;
 
   const PhotoState({
@@ -30,7 +35,7 @@ class PhotoState extends Equatable {
     bool? isLoading,
     bool? loadFail,
     bool? loadSuccess,
-    List<AssetEntity>? photos,
+    List<MediaItem>? photos,
     int? currentIndex,
     int? deleteCount,
     int? keepCount,
@@ -41,8 +46,10 @@ class PhotoState extends Equatable {
       loadFail: loadFail ?? this.loadFail,
       loadSuccess: loadSuccess ?? this.loadSuccess,
       photos: photos ?? this.photos,
-      currentIndex: currentIndex ?? this.currentIndex,
-      deleteCount: deleteCount ?? this.deleteCount,
+      currentIndex:
+          currentIndex ?? this.currentIndex,
+      deleteCount:
+          deleteCount ?? this.deleteCount,
       keepCount: keepCount ?? this.keepCount,
       hasAction: hasAction ?? this.hasAction,
     );
