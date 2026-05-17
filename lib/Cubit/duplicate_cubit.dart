@@ -1,7 +1,9 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image/image.dart'
+    as img;
 import 'package:photo_manager/photo_manager.dart';
 
 import '../Items/media_item.dart';
@@ -16,7 +18,9 @@ class DuplicateCubit
           ),
         );
 
+  /// =========================
   /// LOAD DUPLICATES
+  /// =========================
   Future<void> loadDuplicates() async {
     emit(
       state.copyWith(
@@ -29,7 +33,9 @@ class DuplicateCubit
     );
 
     try {
+      /// =========================
       /// PERMISSION
+      /// =========================
       final permission =
           await PhotoManager
               .requestPermissionExtend(
@@ -56,7 +62,9 @@ class DuplicateCubit
         return;
       }
 
+      /// =========================
       /// LOAD ALBUMS
+      /// =========================
       final albums =
           await PhotoManager.getAssetPathList(
         type: RequestType.common,
@@ -73,7 +81,9 @@ class DuplicateCubit
         return;
       }
 
-      /// LOAD ALL MEDIA
+      /// =========================
+      /// LOAD ASSETS
+      /// =========================
       final assets =
           await albums.first
               .getAssetListPaged(
@@ -81,7 +91,6 @@ class DuplicateCubit
         size: 3000,
       );
 
-      /// ONLY IMAGE / VIDEO
       final filteredAssets =
           assets.where(
         (e) =>
@@ -89,12 +98,18 @@ class DuplicateCubit
             e.type == AssetType.video,
       );
 
-      /// GROUP MAP
-      final Map<
-              String,
-              List<MediaItem>>
-          duplicateMap = {};
+      /// =========================
+      /// HASH STORAGE
+      /// =========================
+      final List<MediaItem> allMedia =
+          [];
 
+      final Map<String, String>
+          hashMap = {};
+
+      /// =========================
+      /// CREATE HASH
+      /// =========================
       for (final asset
           in filteredAssets) {
         try {
@@ -107,47 +122,137 @@ class DuplicateCubit
             continue;
           }
 
-          final file =
-              await asset.file;
+          /// thumbnail nhỏ để hash
+          final thumb =
+              await asset
+                  .thumbnailDataWithSize(
+            const ThumbnailSize(
+              32,
+              32,
+            ),
+          );
 
-          if (file == null ||
-              !(await file.exists())) {
+          if (thumb == null) {
             continue;
           }
 
-          final stat =
-              await file.stat();
+          final decoded =
+              img.decodeImage(thumb);
 
-          /// VERY SIMPLE HASH
-          /// same:
-          /// - size
-          /// - filename
-          final key =
-              "${stat.size}_${asset.title}";
+          if (decoded == null) {
+            continue;
+          }
 
-          duplicateMap.putIfAbsent(
-            key,
-            () => [],
-          );
+          final hash =
+              generateDHash(decoded);
 
-          duplicateMap[key]!.add(
-            media,
-          );
+          hashMap[asset.id] = hash;
+
+          allMedia.add(media);
         } catch (e) {
           // ignore
         }
       }
 
-      /// KEEP ONLY DUPLICATES
-      final duplicateGroups =
-          duplicateMap.values
-              .where(
-                (e) => e.length > 1,
-              )
-              .toList();
+      /// =========================
+      /// FIND DUPLICATES
+      /// =========================
+      final List<List<MediaItem>>
+          duplicateGroups = [];
 
+      final Set<String> used =
+          {};
+
+      for (int i = 0;
+          i < allMedia.length;
+          i++) {
+        final current =
+            allMedia[i];
+
+        if (used.contains(
+          current.asset.id,
+        )) {
+          continue;
+        }
+
+        final currentHash =
+            hashMap[
+                current.asset.id];
+
+        if (currentHash == null) {
+          continue;
+        }
+
+        final List<MediaItem> group =
+            [
+          current,
+        ];
+
+        for (int j = i + 1;
+            j < allMedia.length;
+            j++) {
+          final compare =
+              allMedia[j];
+
+          if (used.contains(
+            compare.asset.id,
+          )) {
+            continue;
+          }
+
+          /// time filter
+          final difference = current
+              .asset.createDateTime
+              .difference(
+                compare.asset
+                    .createDateTime,
+              )
+              .inSeconds
+              .abs();
+
+          if (difference > 30) {
+            continue;
+          }
+
+          final compareHash =
+              hashMap[
+                  compare.asset.id];
+
+          if (compareHash == null) {
+            continue;
+          }
+
+          final distance =
+              hammingDistance(
+            currentHash,
+            compareHash,
+          );
+
+          /// threshold
+          if (distance <= 8) {
+            group.add(compare);
+
+            used.add(
+              compare.asset.id,
+            );
+          }
+        }
+
+        if (group.length > 1) {
+          duplicateGroups.add(
+            group,
+          );
+
+          used.add(
+            current.asset.id,
+          );
+        }
+      }
+
+      /// =========================
       /// AUTO SELECT
-      /// keep first item
+      /// keep first image
+      /// =========================
       final Set<String> selected =
           {};
 
@@ -182,7 +287,73 @@ class DuplicateCubit
     }
   }
 
+  /// =========================
+  /// dHash
+  /// =========================
+  String generateDHash(
+    img.Image image,
+  ) {
+    final resized = img.copyResize(
+      image,
+      width: 9,
+      height: 8,
+    );
+
+    final grayscale =
+        img.grayscale(resized);
+
+    String hash = "";
+
+    for (int y = 0; y < 8; y++) {
+      for (int x = 0; x < 8; x++) {
+        final left =
+            grayscale.getPixel(x, y);
+
+        final right =
+            grayscale.getPixel(
+          x + 1,
+          y,
+        );
+
+        final leftLuma =
+            left.r.toInt();
+
+        final rightLuma =
+            right.r.toInt();
+
+        hash +=
+            leftLuma > rightLuma
+                ? "1"
+                : "0";
+      }
+    }
+
+    return hash;
+  }
+
+  /// =========================
+  /// HAMMING DISTANCE
+  /// =========================
+  int hammingDistance(
+    String a,
+    String b,
+  ) {
+    int distance = 0;
+
+    for (int i = 0;
+        i < min(a.length, b.length);
+        i++) {
+      if (a[i] != b[i]) {
+        distance++;
+      }
+    }
+
+    return distance;
+  }
+
+  /// =========================
   /// TOGGLE SELECT
+  /// =========================
   void toggleSelect(
     String assetId,
   ) {
@@ -210,7 +381,9 @@ class DuplicateCubit
     );
   }
 
+  /// =========================
   /// SELECT ALL
+  /// =========================
   void selectAll() {
     final Set<String> all =
         {};
@@ -231,7 +404,9 @@ class DuplicateCubit
     );
   }
 
-  /// CLEAR SELECT
+  /// =========================
+  /// CLEAR
+  /// =========================
   void clearSelection() {
     emit(
       state.copyWith(
@@ -240,16 +415,19 @@ class DuplicateCubit
     );
   }
 
+  /// =========================
   /// DELETE SELECTED
+  /// =========================
   Future<void>
       deleteSelected() async {
     try {
       final List<AssetEntity>
-      deleteAssets = [];
+          deleteAssets = [];
 
       for (final group
           in state.duplicateGroups) {
-        for (final item in group) {
+        for (final item
+            in group) {
           if (state.selectedIds
               .contains(
             item.asset.id,
@@ -286,7 +464,6 @@ class DuplicateCubit
         ),
       );
 
-      /// RELOAD
       await loadDuplicates();
     } catch (e) {
       emit(
@@ -297,7 +474,9 @@ class DuplicateCubit
     }
   }
 
+  /// =========================
   /// TOTAL DUPLICATES
+  /// =========================
   int get totalDuplicates {
     int total = 0;
 
@@ -309,18 +488,23 @@ class DuplicateCubit
     return total;
   }
 
+  /// =========================
   /// TOTAL SELECTED
+  /// =========================
   int get totalSelected =>
       state.selectedIds.length;
 
-  /// TOTAL SAVED SIZE
+  /// =========================
+  /// TOTAL SIZE
+  /// =========================
   Future<String>
       calculateSelectedSize() async {
     int totalBytes = 0;
 
     for (final group
         in state.duplicateGroups) {
-      for (final item in group) {
+      for (final item
+          in group) {
         if (state.selectedIds
             .contains(
           item.asset.id,
