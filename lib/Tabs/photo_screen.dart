@@ -9,33 +9,40 @@ import 'package:video_player/video_player.dart';
 import '../Cubit/photo_cubit.dart';
 import '../Items/media_item.dart';
 import '../State/photo_state.dart';
+import 'photo_delete_summary_screen.dart';
 
 class PhotoScreen extends StatelessWidget {
   const PhotoScreen({
     super.key,
     required this.onLoad,
+    this.sessionTitle,
   });
 
   /// LOAD FUNCTION FROM HOME
   final Future<void> Function(PhotoCubit cubit) onLoad;
+
+  /// Shown on summary screen (e.g. RECENTS). Falls back to cubit title.
+  final String? sessionTitle;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) {
         final cubit = PhotoCubit();
-
         onLoad(cubit);
-
         return cubit;
       },
-      child: const _PhotoScreenBody(),
+      child: _PhotoScreenBody(
+        sessionTitle: sessionTitle,
+      ),
     );
   }
 }
 
 class _PhotoScreenBody extends StatefulWidget {
-  const _PhotoScreenBody();
+  const _PhotoScreenBody({this.sessionTitle});
+
+  final String? sessionTitle;
 
   @override
   State<_PhotoScreenBody> createState() =>
@@ -57,7 +64,25 @@ class _PhotoScreenBodyState
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: BlocBuilder<PhotoCubit, PhotoState>(
+        child: BlocConsumer<PhotoCubit, PhotoState>(
+          listenWhen: (prev, curr) =>
+              !prev.isSessionComplete && curr.isSessionComplete,
+          listener: (context, state) {
+            final cubit = context.read<PhotoCubit>();
+            final title =
+                widget.sessionTitle ?? cubit.sessionTitle;
+
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => BlocProvider.value(
+                  value: cubit,
+                  child: PhotoDeleteSummaryScreen(
+                    sessionTitle: title,
+                  ),
+                ),
+              ),
+            );
+          },
           builder: (context, state) {
             /// LOADING
             if (state.isLoading) {
@@ -170,6 +195,18 @@ class _PhotoScreenBodyState
                           ],
                         ),
                       ),
+
+                      /// PENDING DELETE COUNT
+                      if (state.deleteCount > 0)
+                        Padding(
+                          padding: EdgeInsets.only(
+                            right: 10 * scale,
+                          ),
+                          child: _deleteCountPill(
+                            count: state.deleteCount,
+                            scale: scale,
+                          ),
+                        ),
 
                       /// UNDO
                       _circleButton(
@@ -628,6 +665,44 @@ class _PhotoScreenBodyState
     }
 
     return "${diff.inDays}d ago";
+  }
+
+  Widget _deleteCountPill({
+    required int count,
+    required double scale,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 12 * scale,
+        vertical: 8 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFB57BFF).withOpacity(0.22),
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(
+          color: const Color(0xFFB57BFF).withOpacity(0.55),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.delete_outline_rounded,
+            color: const Color(0xFFB57BFF),
+            size: 20 * scale,
+          ),
+          SizedBox(width: 6 * scale),
+          Text(
+            '$count',
+            style: TextStyle(
+              color: const Color(0xFFB57BFF),
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _circleButton({

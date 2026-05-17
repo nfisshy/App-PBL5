@@ -17,6 +17,7 @@ class HomeTab extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) => PhotoScreen(
+              sessionTitle: 'Recents',
               onLoad: (cubit) async {
                 await cubit.loadRecentPhotos();
               },
@@ -36,6 +37,7 @@ class HomeTab extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) => PhotoScreen(
+              sessionTitle: 'Random',
               onLoad: (cubit) async {
                 await cubit.loadRandomPhotos();
               },

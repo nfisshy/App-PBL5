@@ -17,8 +17,14 @@ class PhotoState extends Equatable {
   final int deleteCount;
   final int keepCount;
 
+  /// Swiped left — pending real delete on summary screen
+  final List<MediaItem> pendingDeletes;
+
   /// HAS UNDO
   final bool hasAction;
+
+  /// Confirm delete in progress
+  final bool isDeleting;
 
   const PhotoState({
     this.isLoading = false,
@@ -28,8 +34,15 @@ class PhotoState extends Equatable {
     this.currentIndex = 0,
     this.deleteCount = 0,
     this.keepCount = 0,
+    this.pendingDeletes = const [],
     this.hasAction = false,
+    this.isDeleting = false,
   });
+
+  int get reviewedCount => keepCount + deleteCount;
+
+  bool get isSessionComplete =>
+      photos.isNotEmpty && reviewedCount >= photos.length;
 
   PhotoState copyWith({
     bool? isLoading,
@@ -39,7 +52,9 @@ class PhotoState extends Equatable {
     int? currentIndex,
     int? deleteCount,
     int? keepCount,
+    List<MediaItem>? pendingDeletes,
     bool? hasAction,
+    bool? isDeleting,
   }) {
     return PhotoState(
       isLoading: isLoading ?? this.isLoading,
@@ -51,7 +66,10 @@ class PhotoState extends Equatable {
       deleteCount:
           deleteCount ?? this.deleteCount,
       keepCount: keepCount ?? this.keepCount,
+      pendingDeletes:
+          pendingDeletes ?? this.pendingDeletes,
       hasAction: hasAction ?? this.hasAction,
+      isDeleting: isDeleting ?? this.isDeleting,
     );
   }
 
@@ -64,6 +82,8 @@ class PhotoState extends Equatable {
         currentIndex,
         deleteCount,
         keepCount,
+        pendingDeletes,
         hasAction,
+        isDeleting,
       ];
 }
