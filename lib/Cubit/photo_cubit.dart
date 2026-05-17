@@ -13,6 +13,18 @@ enum PhotoMode {
   random,
 }
 
+enum _SwipeActionType { keep, delete }
+
+class _SwipeAction {
+  const _SwipeAction({
+    required this.type,
+    required this.item,
+  });
+
+  final _SwipeActionType type;
+  final MediaItem item;
+}
+
 class PhotoCubit extends Cubit<PhotoState> {
   PhotoCubit()
       : super(
@@ -21,39 +33,37 @@ class PhotoCubit extends Cubit<PhotoState> {
           ),
         );
 
-  /// CURRENT MODE
-  PhotoMode currentMode =
-      PhotoMode.recent;
+  PhotoMode currentMode = PhotoMode.recent;
 
-  /// RECENT LIMIT
   static const int recentDays = 5;
+  static const String processedKey = "processed_assets";
 
-  /// STORAGE KEY
-  static const String processedKey =
-      "processed_assets";
+  final List<_SwipeAction> _actionHistory = [];
 
-  /// LOAD RECENT
   Future<void> loadRecentPhotos() async {
     currentMode = PhotoMode.recent;
-
-    await _loadPhotos(
-      randomMode: false,
-    );
+    await _loadPhotos(randomMode: false);
   }
 
-  /// LOAD RANDOM
   Future<void> loadRandomPhotos() async {
     currentMode = PhotoMode.random;
-
-    await _loadPhotos(
-      randomMode: true,
-    );
+    await _loadPhotos(randomMode: true);
   }
 
-  /// CORE LOADER
+  String get sessionTitle {
+    switch (currentMode) {
+      case PhotoMode.recent:
+        return 'Recents';
+      case PhotoMode.random:
+        return 'Random';
+    }
+  }
+
   Future<void> _loadPhotos({
     required bool randomMode,
   }) async {
+    _actionHistory.clear();
+
     emit(
       state.copyWith(
         isLoading: true,
@@ -61,26 +71,27 @@ class PhotoCubit extends Cubit<PhotoState> {
         loadSuccess: false,
         currentIndex: 0,
         photos: [],
+        deleteCount: 0,
+        keepCount: 0,
+        pendingDeletes: [],
+        hasAction: false,
+        isDeleting: false,
       ),
     );
 
     try {
-      /// PERMISSION
-/// PERMISSION
-final PermissionState permission =
-    await PhotoManager.requestPermissionExtend(
-  requestOption: const PermissionRequestOption(
-    androidPermission: AndroidPermission(
-      type: RequestType.common,
-      mediaLocation: true,
-    ),
-  ),
-);
+      final PermissionState permission =
+          await PhotoManager.requestPermissionExtend(
+        requestOption: const PermissionRequestOption(
+          androidPermission: AndroidPermission(
+            type: RequestType.common,
+            mediaLocation: true,
+          ),
+        ),
+      );
 
-      if (permission !=
-              PermissionState.authorized &&
-          permission !=
-              PermissionState.limited) {
+      if (permission != PermissionState.authorized &&
+          permission != PermissionState.limited) {
         emit(
           state.copyWith(
             isLoading: false,
@@ -90,32 +101,22 @@ final PermissionState permission =
         return;
       }
 
-      /// PREFS
-      final prefs =
-          await SharedPreferences.getInstance();
-
+      final prefs = await SharedPreferences.getInstance();
       final processedIds =
-          prefs.getStringList(
-                processedKey,
-              ) ??
-              [];
+          prefs.getStringList(processedKey) ?? [];
 
-      /// LOAD ALBUM
-      final albums =
-          await PhotoManager.getAssetPathList(
+      final albums = await PhotoManager.getAssetPathList(
         type: RequestType.common,
         onlyAll: true,
         filterOption: FilterOptionGroup(
           containsLivePhotos: true,
           imageOption: const FilterOption(
-            sizeConstraint:
-                SizeConstraint(
+            sizeConstraint: SizeConstraint(
               ignoreSize: true,
             ),
           ),
           videoOption: const FilterOption(
-            sizeConstraint:
-                SizeConstraint(
+            sizeConstraint: SizeConstraint(
               ignoreSize: true,
             ),
           ),
@@ -132,107 +133,51 @@ final PermissionState permission =
         return;
       }
 
-      /// GET ALL MEDIA
-      final rawMedia =
-          await albums.first
-              .getAssetListPaged(
+      final rawMedia = await albums.first.getAssetListPaged(
         page: 0,
         size: 1000,
       );
 
-      /// SORT NEWEST -> OLDEST
       rawMedia.sort(
-        (a, b) => b.createDateTime
-            .compareTo(
-          a.createDateTime,
-        ),
+        (a, b) => b.createDateTime.compareTo(a.createDateTime),
       );
 
-      final List<MediaItem> mediaList =
-          [];
-
+      final List<MediaItem> mediaList = [];
       final now = DateTime.now();
 
-for (final asset in rawMedia) {
-  try {
-    debugPrint(
-      "ASSET => "
-      "type=${asset.type} "
-      "id=${asset.id} "
-      "title=${asset.title}",
-    );
+      for (final asset in rawMedia) {
+        try {
+          if (asset.type != AssetType.image &&
+              asset.type != AssetType.video) {
+            continue;
+          }
 
-    /// ONLY IMAGE / VIDEO
-    if (asset.type != AssetType.image &&
-        asset.type != AssetType.video) {
-      debugPrint(
-        "SKIP TYPE",
-      );
-      continue;
-    }
+          if (processedIds.contains(asset.id)) {
+            continue;
+          }
 
-    /// SKIP PROCESSED
-    if (processedIds.contains(
-      asset.id,
-    )) {
-      debugPrint(
-        "SKIP PROCESSED",
-      );
-      continue;
-    }
+          if (!randomMode) {
+            final difference =
+                now.difference(asset.createDateTime).inDays;
+            if (difference > recentDays) {
+              continue;
+            }
+          }
 
-    /// RECENT FILTER
-    if (!randomMode) {
-      final difference = now
-          .difference(
-            asset.createDateTime,
-          )
-          .inDays;
+          final media = await MediaItem.fromAsset(asset);
+          if (media == null) {
+            continue;
+          }
 
-      if (difference > recentDays) {
-        debugPrint(
-          "SKIP OLD",
-        );
-        continue;
+          mediaList.add(media);
+        } catch (e) {
+          debugPrint("LOAD ASSET ERROR: $e");
+        }
       }
-    }
 
-    /// CREATE MEDIA ITEM
-    final media =
-        await MediaItem.fromAsset(
-      asset,
-    );
-
-    if (media == null) {
-      debugPrint(
-        "MEDIA NULL",
-      );
-      continue;
-    }
-
-    debugPrint(
-      "ADD MEDIA => "
-      "${media.asset.type}",
-    );
-
-    mediaList.add(media);
-  } catch (e) {
-    debugPrint(
-      "LOAD ASSET ERROR: $e",
-    );
-  }
-}
-
-      /// RANDOM
       if (randomMode) {
-        mediaList.shuffle(
-          Random(),
-        );
+        mediaList.shuffle(Random());
       }
-
-      debugPrint(
-        "FINAL MEDIA COUNT: ${mediaList.length}",
-      );
 
       if (mediaList.isEmpty) {
         emit(
@@ -254,10 +199,7 @@ for (final asset in rawMedia) {
         ),
       );
     } catch (e) {
-      debugPrint(
-        "LOAD PHOTO ERROR: $e",
-      );
-
+      debugPrint("LOAD PHOTO ERROR: $e");
       emit(
         state.copyWith(
           isLoading: false,
@@ -267,45 +209,35 @@ for (final asset in rawMedia) {
     }
   }
 
-  /// MARK CURRENT AS PROCESSED
-  Future<void>
-      _markCurrentProcessed() async {
+  Future<void> _markCurrentProcessed() async {
     if (state.photos.isEmpty) return;
 
-    final prefs =
-        await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
+    final processedIds = prefs.getStringList(processedKey) ?? [];
+    final current = state.photos[state.currentIndex];
 
-    final processedIds =
-        prefs.getStringList(
-              processedKey,
-            ) ??
-            [];
-
-    final current =
-        state.photos[state.currentIndex];
-
-    if (!processedIds.contains(
-      current.asset.id,
-    )) {
-      processedIds.add(
-        current.asset.id,
-      );
-
-      await prefs.setStringList(
-        processedKey,
-        processedIds,
-      );
+    if (!processedIds.contains(current.asset.id)) {
+      processedIds.add(current.asset.id);
+      await prefs.setStringList(processedKey, processedIds);
     }
   }
 
-  /// KEEP
   Future<void> keepPhoto() async {
+    if (state.photos.isEmpty || state.isSessionComplete) return;
+
+    final current = state.photos[state.currentIndex];
     await _markCurrentProcessed();
+
+    _actionHistory.add(
+      _SwipeAction(
+        type: _SwipeActionType.keep,
+        item: current,
+      ),
+    );
 
     emit(
       state.copyWith(
-        keepCount:
-            state.keepCount + 1,
+        keepCount: state.keepCount + 1,
         hasAction: true,
       ),
     );
@@ -313,14 +245,26 @@ for (final asset in rawMedia) {
     nextPhoto();
   }
 
-  /// DELETE
   Future<void> deletePhoto() async {
+    if (state.photos.isEmpty || state.isSessionComplete) return;
+
+    final current = state.photos[state.currentIndex];
     await _markCurrentProcessed();
+
+    final pending = List<MediaItem>.from(state.pendingDeletes)
+      ..add(current);
+
+    _actionHistory.add(
+      _SwipeAction(
+        type: _SwipeActionType.delete,
+        item: current,
+      ),
+    );
 
     emit(
       state.copyWith(
-        deleteCount:
-            state.deleteCount + 1,
+        deleteCount: state.deleteCount + 1,
+        pendingDeletes: pending,
         hasAction: true,
       ),
     );
@@ -328,40 +272,36 @@ for (final asset in rawMedia) {
     nextPhoto();
   }
 
-  /// NEXT
   void nextPhoto() {
-    if (state.currentIndex <
-        state.photos.length - 1) {
+    if (state.currentIndex < state.photos.length - 1) {
       emit(
         state.copyWith(
-          currentIndex:
-              state.currentIndex + 1,
+          currentIndex: state.currentIndex + 1,
         ),
       );
     }
   }
 
-  /// UNDO
   void undoAction() {
-    if (!state.hasAction) return;
+    if (!state.hasAction || _actionHistory.isEmpty) return;
 
-    int newIndex =
-        state.currentIndex;
-
-    int newKeep =
-        state.keepCount;
-
-    int newDelete =
-        state.deleteCount;
+    final last = _actionHistory.removeLast();
+    var newIndex = state.currentIndex;
+    var newKeep = state.keepCount;
+    var newDelete = state.deleteCount;
+    var pending = List<MediaItem>.from(state.pendingDeletes);
 
     if (newIndex > 0) {
       newIndex--;
     }
 
-    if (newKeep > 0) {
+    if (last.type == _SwipeActionType.keep) {
       newKeep--;
-    } else if (newDelete > 0) {
+    } else {
       newDelete--;
+      pending.removeWhere(
+        (e) => e.asset.id == last.item.asset.id,
+      );
     }
 
     emit(
@@ -369,10 +309,49 @@ for (final asset in rawMedia) {
         currentIndex: newIndex,
         keepCount: newKeep,
         deleteCount: newDelete,
-        hasAction:
-            newKeep > 0 ||
-                newDelete > 0,
+        pendingDeletes: pending,
+        hasAction: newKeep > 0 || newDelete > 0,
       ),
     );
+  }
+
+  void togglePendingDelete(String assetId) {
+    final pending = List<MediaItem>.from(state.pendingDeletes);
+    final index = pending.indexWhere((e) => e.asset.id == assetId);
+    if (index < 0) return;
+
+    pending.removeAt(index);
+    emit(
+      state.copyWith(
+        pendingDeletes: pending,
+        deleteCount: pending.length,
+      ),
+    );
+  }
+
+  Future<bool> confirmDeletePending() async {
+    if (state.pendingDeletes.isEmpty) {
+      return true;
+    }
+
+    emit(state.copyWith(isDeleting: true));
+
+    try {
+      await PhotoManager.editor.deleteWithIds(
+        state.pendingDeletes.map((e) => e.asset.id).toList(),
+      );
+
+      emit(
+        state.copyWith(
+          isDeleting: false,
+          pendingDeletes: [],
+        ),
+      );
+      return true;
+    } catch (e) {
+      debugPrint("CONFIRM DELETE ERROR: $e");
+      emit(state.copyWith(isDeleting: false));
+      return false;
+    }
   }
 }
