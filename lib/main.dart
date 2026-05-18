@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'Tabs/mainscreen.dart';
+import 'Tabs/recents_noti.dart';
 import 'Widgets/streak/streak_scope.dart';
 import 'Widgets/streak/streak_controller.dart';
 

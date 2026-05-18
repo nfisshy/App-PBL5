@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../Cubit/photo_cubit.dart';
 import '../Items/media_item.dart';
 import '../State/photo_state.dart';
-
+import 'photo_result_screen.dart';
 /// Review screen after swipe session — real delete happens here only.
 class PhotoDeleteSummaryScreen extends StatelessWidget {
   const PhotoDeleteSummaryScreen({
@@ -203,23 +203,83 @@ class PhotoDeleteSummaryScreen extends StatelessWidget {
     if (navigator.canPop()) navigator.pop();
   }
 
-  Future<void> _onConfirmDelete(BuildContext context) async {
-    final cubit = context.read<PhotoCubit>();
-    final ok = await cubit.confirmDeletePending();
+Future<void> _onConfirmDelete(
+  BuildContext context,
+) async {
+  final cubit =
+      context.read<PhotoCubit>();
 
-    if (!context.mounted) return;
+  /// =========================
+  /// SNAPSHOT BEFORE DELETE
+  /// =========================
+  final pending =
+      List.of(
+        cubit.state.pendingDeletes,
+      );
 
-    if (ok) {
-      _popSwipeAndSummary(context);
-      return;
-    }
+  final deleteCount =
+      pending.length;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Could not delete photos. Please try again.'),
+  final keepCount =
+      cubit.state.photos.length -
+      deleteCount;
+
+  int savedBytes = 0;
+
+  for (final item in pending) {
+    savedBytes += item.fileSize;
+  }
+
+  /// =========================
+  /// DELETE
+  /// =========================
+  final ok =
+      await cubit
+          .confirmDeletePending();
+
+  if (!context.mounted) {
+    return;
+  }
+
+  /// =========================
+  /// SUCCESS
+  /// =========================
+  if (ok) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => SwipeResultScreen(
+              sessionTitle:
+                  sessionTitle,
+
+              keepCount:
+                  keepCount,
+
+              deleteCount:
+                  deleteCount,
+
+              savedBytes:
+                  savedBytes,
+            ),
       ),
     );
+
+    return;
   }
+
+  /// =========================
+  /// FAIL
+  /// =========================
+  ScaffoldMessenger.of(context)
+      .showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Could not delete photos. Please try again.',
+      ),
+    ),
+  );
+}
 
   Widget _circleButton({
     required IconData icon,

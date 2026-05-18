@@ -1,24 +1,29 @@
 import 'package:flutter/material.dart';
 
-import 'home_tab.dart';
-import '../Widgets/navbar.dart';
-import '../Widgets/header.dart';
-
-import 'setting_tab.dart';
 import 'album_tab.dart';
+import 'home_tab.dart';
+import 'setting_tab.dart';
 import 'tool_tab.dart';
 
+import '../Widgets/header.dart';
+import '../Widgets/navbar.dart';
+
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  const MainScreen({
+    super.key,
+  });
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<MainScreen> createState() =>
+      _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState
+    extends State<MainScreen> {
   int currentIndex = 0;
 
-  late double _dragStartX;
+  late final PageController
+      _pageController;
 
   final pages = const [
     HomeTab(),
@@ -27,70 +32,81 @@ class _MainScreenState extends State<MainScreen> {
     ToolTab(),
   ];
 
-  void _onHorizontalDrag(DragStartDetails details) {
-    _dragStartX = details.globalPosition.dx;
+  @override
+  void initState() {
+    super.initState();
+
+    _pageController =
+        PageController(
+          initialPage: currentIndex,
+        );
   }
 
-  void _onHorizontalDragEnd(DragEndDetails details) {
-    const double dragThreshold = 50.0;
+  @override
+  void dispose() {
+    _pageController.dispose();
 
-    final dragDistance =
-        _dragStartX - details.globalPosition.dx;
+    super.dispose();
+  }
 
-    /// SWIPE LEFT
-    if (dragDistance > dragThreshold &&
-        currentIndex < pages.length - 1) {
-      setState(() {
-        currentIndex++;
-      });
-    }
+  void _changePage(int index) {
+    setState(() {
+      currentIndex = index;
+    });
 
-    /// SWIPE RIGHT
-    if (dragDistance < -dragThreshold &&
-        currentIndex > 0) {
-      setState(() {
-        currentIndex--;
-      });
-    }
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(
+        milliseconds: 280,
+      ),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFE8DC),
+      backgroundColor:
+          const Color(0xFFFFE8DC),
 
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            /// HEADER FIXED
+            /// HEADER
             const AppHeader(),
 
-            /// CONTENT SCROLL
+            /// PAGE VIEW
             Expanded(
-              child: GestureDetector(
-                onHorizontalDragStart:
-                    _onHorizontalDrag,
+              child: PageView(
+                controller:
+                    _pageController,
 
-                onHorizontalDragEnd:
-                    _onHorizontalDragEnd,
+                physics:
+                    const BouncingScrollPhysics(),
 
-                child: IndexedStack(
-                  index: currentIndex,
-                  children: pages,
-                ),
+                onPageChanged: (
+                  index,
+                ) {
+                  setState(() {
+                    currentIndex =
+                        index;
+                  });
+                },
+
+                children: pages,
               ),
             ),
           ],
         ),
       ),
 
-      bottomNavigationBar: CustomBottomNavBar(
+      bottomNavigationBar:
+          CustomBottomNavBar(
         currentIndex: currentIndex,
-        onTap: (i) {
-          setState(() {
-            currentIndex = i;
-          });
+
+        onTap: (index) {
+          _changePage(index);
         },
       ),
     );

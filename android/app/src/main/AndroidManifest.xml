@@ -1,11 +1,49 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Android 13+ -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <!-- ========================= -->
+    <!-- ANDROID 13+ -->
+    <!-- ========================= -->
 
-    <!-- Android 12 trở xuống -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <!-- Photos -->
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Videos -->
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_VIDEO" />
+
+    <!-- Audio (nếu sau này dùng live photo/video motion audio) -->
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_AUDIO" />
+
+    <!-- ========================= -->
+    <!-- ANDROID 12- -->
+    <!-- ========================= -->
+
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Nếu muốn xoá file trực tiếp -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+
+    <!-- ========================= -->
+    <!-- LOCATION / METADATA -->
+    <!-- ========================= -->
+
+    <!-- đọc GPS EXIF -->
+    <uses-permission
+        android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+
+    <!-- optional -->
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- ========================= -->
+    <!-- APPLICATION -->
+    <!-- ========================= -->
 
     <application
         android:label="photoapp"
@@ -23,7 +61,6 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
-            <!-- Flutter splash theme -->
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
@@ -35,14 +72,16 @@
 
         </activity>
 
-        <!-- Flutter embedding -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
 
     </application>
 
-    <!-- Process text support -->
+    <!-- ========================= -->
+    <!-- PROCESS TEXT -->
+    <!-- ========================= -->
+
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

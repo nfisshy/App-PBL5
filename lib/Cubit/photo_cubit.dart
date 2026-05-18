@@ -8,12 +8,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Items/media_item.dart';
 import '../State/photo_state.dart';
 
-enum PhotoMode {
+enum PhotoSessionType {
+  anything,
+  photos,
+  videos,
   recent,
   random,
+  screenshots,
+  livePhotos,
 }
 
-enum _SwipeActionType { keep, delete }
+enum _SwipeActionType {
+  keep,
+  delete,
+}
 
 class _SwipeAction {
   const _SwipeAction({
@@ -33,35 +41,146 @@ class PhotoCubit extends Cubit<PhotoState> {
           ),
         );
 
-  PhotoMode currentMode = PhotoMode.recent;
+  /// CURRENT SESSION
+  PhotoSessionType currentSession =
+      PhotoSessionType.anything;
 
+  /// RECENT LIMIT
   static const int recentDays = 5;
-  static const String processedKey = "processed_assets";
 
-  final List<_SwipeAction> _actionHistory = [];
+  /// STORAGE KEY
+  static const String processedKey =
+      "processed_assets";
 
-  Future<void> loadRecentPhotos() async {
-    currentMode = PhotoMode.recent;
-    await _loadPhotos(randomMode: false);
+  /// HISTORY
+  final List<_SwipeAction>
+      _actionHistory = [];
+
+  /// LOAD SESSION
+  Future<void> loadSession(
+    PhotoSessionType type,
+  ) async {
+    currentSession = type;
+
+    await _loadPhotos();
   }
 
-  Future<void> loadRandomPhotos() async {
-    currentMode = PhotoMode.random;
-    await _loadPhotos(randomMode: true);
-  }
-
+  /// SESSION TITLE
   String get sessionTitle {
-    switch (currentMode) {
-      case PhotoMode.recent:
-        return 'Recents';
-      case PhotoMode.random:
-        return 'Random';
+    switch (currentSession) {
+      case PhotoSessionType.anything:
+        return "Anything";
+
+      case PhotoSessionType.photos:
+        return "Photos";
+
+      case PhotoSessionType.videos:
+        return "Videos";
+
+      case PhotoSessionType.recent:
+        return "Recents";
+
+      case PhotoSessionType.random:
+        return "Random";
+
+      case PhotoSessionType.screenshots:
+        return "Screenshots";
+
+      case PhotoSessionType.livePhotos:
+        return "Live Photos";
     }
   }
 
-  Future<void> _loadPhotos({
-    required bool randomMode,
-  }) async {
+  /// CHECK SCREENSHOT
+  Future<bool> _isScreenshot(
+    AssetEntity asset,
+  ) async {
+    final file = await asset.file;
+
+    if (file == null) {
+      return false;
+    }
+
+    final path =
+        file.path.toLowerCase();
+
+    final title =
+        (asset.title ?? "")
+            .toLowerCase();
+
+    return path.contains(
+              "screenshot",
+            ) ||
+        title.contains(
+          "screenshot",
+        ) ||
+        path.contains(
+          "screen_shot",
+        );
+  }
+
+  /// FILTER
+  Future<bool> _shouldIncludeAsset(
+    AssetEntity asset,
+  ) async {
+    switch (currentSession) {
+      /// EVERYTHING
+      case PhotoSessionType.anything:
+        return asset.type ==
+                AssetType.image ||
+            asset.type ==
+                AssetType.video;
+
+      /// ONLY PHOTOS
+      case PhotoSessionType.photos:
+        return asset.type ==
+            AssetType.image;
+
+      /// ONLY VIDEOS
+      case PhotoSessionType.videos:
+        return asset.type ==
+            AssetType.video;
+
+      /// RECENT
+      case PhotoSessionType.recent:
+        final difference = DateTime.now()
+            .difference(
+              asset.createDateTime,
+            )
+            .inDays;
+
+        return (asset.type ==
+                    AssetType.image ||
+                asset.type ==
+                    AssetType.video) &&
+            difference <= recentDays;
+
+      /// RANDOM
+      case PhotoSessionType.random:
+        return asset.type ==
+                AssetType.image ||
+            asset.type ==
+                AssetType.video;
+
+      /// SCREENSHOTS
+      case PhotoSessionType.screenshots:
+        if (asset.type !=
+            AssetType.image) {
+          return false;
+        }
+
+        return await _isScreenshot(
+          asset,
+        );
+
+      /// LIVE PHOTOS
+      case PhotoSessionType.livePhotos:
+        return asset.isLivePhoto;
+    }
+  }
+
+  /// LOAD PHOTOS
+  Future<void> _loadPhotos() async {
     _actionHistory.clear();
 
     emit(
@@ -80,18 +199,24 @@ class PhotoCubit extends Cubit<PhotoState> {
     );
 
     try {
+      /// PERMISSION
       final PermissionState permission =
-          await PhotoManager.requestPermissionExtend(
-        requestOption: const PermissionRequestOption(
-          androidPermission: AndroidPermission(
+          await PhotoManager
+              .requestPermissionExtend(
+        requestOption:
+            const PermissionRequestOption(
+          androidPermission:
+              AndroidPermission(
             type: RequestType.common,
             mediaLocation: true,
           ),
         ),
       );
 
-      if (permission != PermissionState.authorized &&
-          permission != PermissionState.limited) {
+      if (permission !=
+              PermissionState.authorized &&
+          permission !=
+              PermissionState.limited) {
         emit(
           state.copyWith(
             isLoading: false,
@@ -101,22 +226,34 @@ class PhotoCubit extends Cubit<PhotoState> {
         return;
       }
 
-      final prefs = await SharedPreferences.getInstance();
-      final processedIds =
-          prefs.getStringList(processedKey) ?? [];
+      /// PREFS
+      final prefs =
+          await SharedPreferences.getInstance();
 
-      final albums = await PhotoManager.getAssetPathList(
+      final processedIds =
+          prefs.getStringList(
+                processedKey,
+              ) ??
+              [];
+
+      /// LOAD ALBUM
+      final albums =
+          await PhotoManager.getAssetPathList(
         type: RequestType.common,
         onlyAll: true,
         filterOption: FilterOptionGroup(
           containsLivePhotos: true,
-          imageOption: const FilterOption(
-            sizeConstraint: SizeConstraint(
+          imageOption:
+              const FilterOption(
+            sizeConstraint:
+                SizeConstraint(
               ignoreSize: true,
             ),
           ),
-          videoOption: const FilterOption(
-            sizeConstraint: SizeConstraint(
+          videoOption:
+              const FilterOption(
+            sizeConstraint:
+                SizeConstraint(
               ignoreSize: true,
             ),
           ),
@@ -133,52 +270,68 @@ class PhotoCubit extends Cubit<PhotoState> {
         return;
       }
 
-      final rawMedia = await albums.first.getAssetListPaged(
+      /// LOAD MEDIA
+      final rawMedia =
+          await albums.first
+              .getAssetListPaged(
         page: 0,
         size: 1000,
       );
 
+      /// SORT
       rawMedia.sort(
-        (a, b) => b.createDateTime.compareTo(a.createDateTime),
+        (a, b) => b.createDateTime
+            .compareTo(
+          a.createDateTime,
+        ),
       );
 
-      final List<MediaItem> mediaList = [];
-      final now = DateTime.now();
+      final List<MediaItem> mediaList =
+          [];
 
       for (final asset in rawMedia) {
         try {
-          if (asset.type != AssetType.image &&
-              asset.type != AssetType.video) {
+          /// FILTER
+          if (!(await _shouldIncludeAsset(
+            asset,
+          ))) {
             continue;
           }
 
-          if (processedIds.contains(asset.id)) {
+          /// SKIP PROCESSED
+          if (processedIds.contains(
+            asset.id,
+          )) {
             continue;
           }
 
-          if (!randomMode) {
-            final difference =
-                now.difference(asset.createDateTime).inDays;
-            if (difference > recentDays) {
-              continue;
-            }
-          }
+          /// CREATE MEDIA
+          final media =
+              await MediaItem.fromAsset(
+            asset,
+          );
 
-          final media = await MediaItem.fromAsset(asset);
           if (media == null) {
             continue;
           }
 
           mediaList.add(media);
         } catch (e) {
-          debugPrint("LOAD ASSET ERROR: $e");
+          debugPrint(
+            "LOAD ASSET ERROR: $e",
+          );
         }
       }
 
-      if (randomMode) {
-        mediaList.shuffle(Random());
+      /// RANDOMIZE
+      if (currentSession ==
+          PhotoSessionType.random) {
+        mediaList.shuffle(
+          Random(),
+        );
       }
 
+      /// EMPTY
       if (mediaList.isEmpty) {
         emit(
           state.copyWith(
@@ -189,6 +342,7 @@ class PhotoCubit extends Cubit<PhotoState> {
         return;
       }
 
+      /// SUCCESS
       emit(
         state.copyWith(
           isLoading: false,
@@ -199,7 +353,10 @@ class PhotoCubit extends Cubit<PhotoState> {
         ),
       );
     } catch (e) {
-      debugPrint("LOAD PHOTO ERROR: $e");
+      debugPrint(
+        "LOAD PHOTO ERROR: $e",
+      );
+
       emit(
         state.copyWith(
           isLoading: false,
@@ -209,23 +366,49 @@ class PhotoCubit extends Cubit<PhotoState> {
     }
   }
 
-  Future<void> _markCurrentProcessed() async {
-    if (state.photos.isEmpty) return;
+  /// MARK CURRENT PROCESSED
+  Future<void>
+      _markCurrentProcessed() async {
+    if (state.photos.isEmpty) {
+      return;
+    }
 
-    final prefs = await SharedPreferences.getInstance();
-    final processedIds = prefs.getStringList(processedKey) ?? [];
-    final current = state.photos[state.currentIndex];
+    final prefs =
+        await SharedPreferences.getInstance();
 
-    if (!processedIds.contains(current.asset.id)) {
-      processedIds.add(current.asset.id);
-      await prefs.setStringList(processedKey, processedIds);
+    final processedIds =
+        prefs.getStringList(
+              processedKey,
+            ) ??
+            [];
+
+    final current =
+        state.photos[state.currentIndex];
+
+    if (!processedIds.contains(
+      current.asset.id,
+    )) {
+      processedIds.add(
+        current.asset.id,
+      );
+
+      await prefs.setStringList(
+        processedKey,
+        processedIds,
+      );
     }
   }
 
+  /// KEEP
   Future<void> keepPhoto() async {
-    if (state.photos.isEmpty || state.isSessionComplete) return;
+    if (state.photos.isEmpty ||
+        state.isSessionComplete) {
+      return;
+    }
 
-    final current = state.photos[state.currentIndex];
+    final current =
+        state.photos[state.currentIndex];
+
     await _markCurrentProcessed();
 
     _actionHistory.add(
@@ -237,7 +420,8 @@ class PhotoCubit extends Cubit<PhotoState> {
 
     emit(
       state.copyWith(
-        keepCount: state.keepCount + 1,
+        keepCount:
+            state.keepCount + 1,
         hasAction: true,
       ),
     );
@@ -245,14 +429,22 @@ class PhotoCubit extends Cubit<PhotoState> {
     nextPhoto();
   }
 
+  /// DELETE
   Future<void> deletePhoto() async {
-    if (state.photos.isEmpty || state.isSessionComplete) return;
+    if (state.photos.isEmpty ||
+        state.isSessionComplete) {
+      return;
+    }
 
-    final current = state.photos[state.currentIndex];
+    final current =
+        state.photos[state.currentIndex];
+
     await _markCurrentProcessed();
 
-    final pending = List<MediaItem>.from(state.pendingDeletes)
-      ..add(current);
+    final pending =
+        List<MediaItem>.from(
+      state.pendingDeletes,
+    )..add(current);
 
     _actionHistory.add(
       _SwipeAction(
@@ -263,7 +455,8 @@ class PhotoCubit extends Cubit<PhotoState> {
 
     emit(
       state.copyWith(
-        deleteCount: state.deleteCount + 1,
+        deleteCount:
+            state.deleteCount + 1,
         pendingDeletes: pending,
         hasAction: true,
       ),
@@ -272,35 +465,57 @@ class PhotoCubit extends Cubit<PhotoState> {
     nextPhoto();
   }
 
+  /// NEXT
   void nextPhoto() {
-    if (state.currentIndex < state.photos.length - 1) {
+    if (state.currentIndex <
+        state.photos.length - 1) {
       emit(
         state.copyWith(
-          currentIndex: state.currentIndex + 1,
+          currentIndex:
+              state.currentIndex + 1,
         ),
       );
     }
   }
 
+  /// UNDO
   void undoAction() {
-    if (!state.hasAction || _actionHistory.isEmpty) return;
+    if (!state.hasAction ||
+        _actionHistory.isEmpty) {
+      return;
+    }
 
-    final last = _actionHistory.removeLast();
-    var newIndex = state.currentIndex;
-    var newKeep = state.keepCount;
-    var newDelete = state.deleteCount;
-    var pending = List<MediaItem>.from(state.pendingDeletes);
+    final last =
+        _actionHistory.removeLast();
+
+    int newIndex =
+        state.currentIndex;
+
+    int newKeep =
+        state.keepCount;
+
+    int newDelete =
+        state.deleteCount;
+
+    final pending =
+        List<MediaItem>.from(
+      state.pendingDeletes,
+    );
 
     if (newIndex > 0) {
       newIndex--;
     }
 
-    if (last.type == _SwipeActionType.keep) {
+    if (last.type ==
+        _SwipeActionType.keep) {
       newKeep--;
     } else {
       newDelete--;
+
       pending.removeWhere(
-        (e) => e.asset.id == last.item.asset.id,
+        (e) =>
+            e.asset.id ==
+            last.item.asset.id,
       );
     }
 
@@ -310,17 +525,33 @@ class PhotoCubit extends Cubit<PhotoState> {
         keepCount: newKeep,
         deleteCount: newDelete,
         pendingDeletes: pending,
-        hasAction: newKeep > 0 || newDelete > 0,
+        hasAction:
+            newKeep > 0 ||
+                newDelete > 0,
       ),
     );
   }
 
-  void togglePendingDelete(String assetId) {
-    final pending = List<MediaItem>.from(state.pendingDeletes);
-    final index = pending.indexWhere((e) => e.asset.id == assetId);
-    if (index < 0) return;
+  /// TOGGLE PENDING DELETE
+  void togglePendingDelete(
+    String assetId,
+  ) {
+    final pending =
+        List<MediaItem>.from(
+      state.pendingDeletes,
+    );
+
+    final index =
+        pending.indexWhere(
+      (e) => e.asset.id == assetId,
+    );
+
+    if (index < 0) {
+      return;
+    }
 
     pending.removeAt(index);
+
     emit(
       state.copyWith(
         pendingDeletes: pending,
@@ -329,16 +560,27 @@ class PhotoCubit extends Cubit<PhotoState> {
     );
   }
 
-  Future<bool> confirmDeletePending() async {
+  /// CONFIRM DELETE
+  Future<bool>
+      confirmDeletePending() async {
     if (state.pendingDeletes.isEmpty) {
       return true;
     }
 
-    emit(state.copyWith(isDeleting: true));
+    emit(
+      state.copyWith(
+        isDeleting: true,
+      ),
+    );
 
     try {
-      await PhotoManager.editor.deleteWithIds(
-        state.pendingDeletes.map((e) => e.asset.id).toList(),
+      await PhotoManager.editor
+          .deleteWithIds(
+        state.pendingDeletes
+            .map(
+              (e) => e.asset.id,
+            )
+            .toList(),
       );
 
       emit(
@@ -347,10 +589,19 @@ class PhotoCubit extends Cubit<PhotoState> {
           pendingDeletes: [],
         ),
       );
+
       return true;
     } catch (e) {
-      debugPrint("CONFIRM DELETE ERROR: $e");
-      emit(state.copyWith(isDeleting: false));
+      debugPrint(
+        "CONFIRM DELETE ERROR: $e",
+      );
+
+      emit(
+        state.copyWith(
+          isDeleting: false,
+        ),
+      );
+
       return false;
     }
   }

@@ -1,71 +1,62 @@
 import 'package:flutter/material.dart';
-import 'photo_screen.dart';
+
+import '../Cubit/photo_cubit.dart';
 import 'duplicates.dart';
+import 'photo_screen.dart';
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
 
-  static final List<_HomeCard> cards = [
-    _HomeCard(
-      title: 'Recents',
-      subtitle: 'Recent unprocessed photos',
-      icon: Icons.access_time_rounded,
-      gradient: _G.recents,
-      badge: 'NEW',
-      onOpen: (context) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PhotoScreen(
-              sessionTitle: 'Recents',
-              onLoad: (cubit) async {
-                await cubit.loadRecentPhotos();
-              },
-            ),
-          ),
-        );
-      },
-    ),
-
-    _HomeCard(
-      title: 'Random',
-      subtitle: 'Shuffle your memories',
-      icon: Icons.shuffle_rounded,
-      gradient: _G.random,
-      onOpen: (context) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PhotoScreen(
-              sessionTitle: 'Random',
-              onLoad: (cubit) async {
-                await cubit.loadRandomPhotos();
-              },
-            ),
-          ),
-        );
-      },
-    ),
-
-    _HomeCard(
-      title: 'Duplicates',
-      subtitle: 'Clean up similar photos',
-      icon: Icons.photo_library_outlined,
-      gradient: _G.duplicates,
-      onOpen: (context) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                const DuplicatesScreen(),
-          ),
-        );
-      },
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final List<_HomeCard> cards = [
+      /// RECENTS
+      _HomeCard(
+        title: 'Recents',
+        subtitle: 'Recent unprocessed photos',
+        icon: Icons.access_time_rounded,
+        gradient: _G.recents,
+        badge: 'NEW',
+        onOpen: () {
+          _openSession(
+            context,
+            PhotoSessionType.recent,
+          );
+        },
+      ),
+
+      /// RANDOM
+      _HomeCard(
+        title: 'Random',
+        subtitle: 'Shuffle your memories',
+        icon: Icons.shuffle_rounded,
+        gradient: _G.random,
+        onOpen: () {
+          _openSession(
+            context,
+            PhotoSessionType.random,
+          );
+        },
+      ),
+
+      /// DUPLICATES
+      _HomeCard(
+        title: 'Duplicates',
+        subtitle: 'Clean up similar photos',
+        icon: Icons.photo_library_outlined,
+        gradient: _G.duplicates,
+        onOpen: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  const DuplicatesScreen(),
+            ),
+          );
+        },
+      ),
+    ];
+
     return ListView(
       padding: EdgeInsets.zero,
       physics:
@@ -77,13 +68,58 @@ class HomeTab extends StatelessWidget {
             foreground: Colors.white,
             label: card.title,
             icon: card.icon,
-            onTap: () {
-              card.onOpen(context);
-            },
             badge: card.badge,
+            onTap: card.onOpen,
           ),
       ],
     );
+  }
+
+  void _openSession(
+    BuildContext context,
+    PhotoSessionType type,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PhotoScreen(
+          sessionTitle:
+              _getSessionTitle(type),
+          onLoad: (cubit) async {
+            await cubit.loadSession(
+              type,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  String _getSessionTitle(
+    PhotoSessionType type,
+  ) {
+    switch (type) {
+      case PhotoSessionType.anything:
+        return "Anything";
+
+      case PhotoSessionType.photos:
+        return "Photos";
+
+      case PhotoSessionType.videos:
+        return "Videos";
+
+      case PhotoSessionType.recent:
+        return "Recents";
+
+      case PhotoSessionType.random:
+        return "Random";
+      
+      case PhotoSessionType.screenshots:  
+        return "Screenshots";
+      
+      case PhotoSessionType.livePhotos:
+        return "Live Photos";
+    }
   }
 }
 
@@ -101,10 +137,7 @@ class _HomeCard {
   final String subtitle;
   final IconData icon;
   final Gradient gradient;
-
-  final void Function(BuildContext context)
-      onOpen;
-
+  final VoidCallback onOpen;
   final String? badge;
 }
 
@@ -134,13 +167,19 @@ class _SwipeStyleGradientRow
       color: Colors.transparent,
       child: Ink(
         decoration:
-            BoxDecoration(gradient: gradient),
+            BoxDecoration(
+          gradient: gradient,
+        ),
         child: InkWell(
           onTap: onTap,
           splashColor:
-              foreground.withOpacity(0.14),
+              foreground.withOpacity(
+            0.14,
+          ),
           highlightColor:
-              foreground.withOpacity(0.06),
+              foreground.withOpacity(
+            0.06,
+          ),
           child: SizedBox(
             height: _rowHeight,
             width: double.infinity,
@@ -160,14 +199,18 @@ class _SwipeStyleGradientRow
                         label,
                         maxLines: 1,
                         overflow:
-                            TextOverflow.ellipsis,
-                        style: TextStyle(
+                            TextOverflow
+                                .ellipsis,
+                        style:
+                            TextStyle(
                           fontSize: 21,
                           fontWeight:
-                              FontWeight.w900,
+                              FontWeight
+                                  .w900,
                           letterSpacing:
                               -0.35,
-                          color: foreground,
+                          color:
+                              foreground,
                         ),
                       ),
                     ),
@@ -182,7 +225,8 @@ class _SwipeStyleGradientRow
                       ),
                       decoration:
                           BoxDecoration(
-                        color: Colors.white,
+                        color:
+                            Colors.white,
                         borderRadius:
                             BorderRadius.circular(
                           100,
@@ -192,15 +236,19 @@ class _SwipeStyleGradientRow
                         badge!,
                         style:
                             const TextStyle(
-                          color: Colors.black87,
+                          color:
+                              Colors.black87,
                           fontWeight:
-                              FontWeight.w800,
+                              FontWeight
+                                  .w800,
                           fontSize: 11,
                         ),
                       ),
                     ),
 
-                    const SizedBox(width: 10),
+                    const SizedBox(
+                      width: 10,
+                    ),
                   ],
 
                   Icon(
@@ -219,6 +267,36 @@ class _SwipeStyleGradientRow
 }
 
 abstract final class _G {
+  static const LinearGradient anything =
+      LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      Color(0xFF111827),
+      Color(0xFF374151),
+    ],
+  );
+
+  static const LinearGradient photos =
+      LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      Color(0xFF06B6D4),
+      Color(0xFF2563EB),
+    ],
+  );
+
+  static const LinearGradient videos =
+      LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [
+      Color(0xFFEF4444),
+      Color(0xFFF97316),
+    ],
+  );
+
   static const LinearGradient recents =
       LinearGradient(
     begin: Alignment.centerLeft,
