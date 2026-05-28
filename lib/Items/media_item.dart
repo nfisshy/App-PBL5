@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:photo_manager/photo_manager.dart';
@@ -37,7 +36,8 @@ class MediaItem {
       return "${(fileSize / 1024).toStringAsFixed(1)} KB";
     }
 
-    if (fileSize < 1024 * 1024 * 1024) {
+    if (fileSize <
+        1024 * 1024 * 1024) {
       return "${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB";
     }
 
@@ -54,22 +54,26 @@ class MediaItem {
 
       Uint8List? thumb;
 
-      /// IMAGE THUMB
-      if (!isVideo) {
-        try {
-          thumb =
-              await asset.thumbnailDataWithSize(
-            const ThumbnailSize(
-              500,
-              500,
-            ),
-          );
-        } catch (_) {}
-      }
+      /// CREATE THUMBNAIL
+      /// WORKS FOR:
+      /// - IMAGE
+      /// - VIDEO
+      /// - LIVE PHOTO
+      try {
+        thumb =
+            await asset
+                .thumbnailDataWithSize(
+          const ThumbnailSize(
+            500,
+            500,
+          ),
+          quality: 90,
+        );
+      } catch (_) {}
 
       int size = 0;
 
-      /// TRY GET FILE SIZE
+      /// FILE SIZE
       try {
         final file =
             await asset.file;
@@ -84,7 +88,8 @@ class MediaItem {
         asset: asset,
         thumbnail: thumb,
         isVideo: isVideo,
-        isLivePhoto: false,
+        isLivePhoto:
+            asset.isLivePhoto,
         fileSize: size,
         createdAt:
             asset.createDateTime,

@@ -1,155 +1,179 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../Cubit/photo_cubit.dart';
+import '../State/photo_state.dart';
+
 import 'duplicates.dart';
 import 'photo_screen.dart';
-
-class HomeTab extends StatelessWidget {
+import '../main.dart';
+import 'recents_noti.dart';
+import 'photo_delete_summary_screen.dart';
+class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 
   @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> with RouteAware {
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPopNext() {
+    context.read<PhotoCubit>().loadRecentHomeStatus();
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final List<_HomeCard> cards = [
-      /// RECENTS
-      _HomeCard(
-        title: 'Recents',
-        subtitle: 'Recent unprocessed photos',
-        icon: Icons.access_time_rounded,
-        gradient: _G.recents,
-        badge: 'NEW',
-        onOpen: () {
-          _openSession(
-            context,
-            PhotoSessionType.recent,
-          );
-        },
-      ),
+    return BlocBuilder<PhotoCubit, PhotoState>(
+      builder: (context, state) {
+        return ListView(
+          padding: EdgeInsets.zero,
+          physics: const BouncingScrollPhysics(),
+          children: [
+            /// =========================
+            /// RECENTS
+            /// =========================
+            _SwipeStyleGradientRow(
+              gradient: _G.recents,
+              foreground: Colors.white,
+              label: 'Recents',
+              icon: Icons.access_time_rounded,
 
-      /// RANDOM
-      _HomeCard(
-        title: 'Random',
-        subtitle: 'Shuffle your memories',
-        icon: Icons.shuffle_rounded,
-        gradient: _G.random,
-        onOpen: () {
-          _openSession(
-            context,
-            PhotoSessionType.random,
-          );
-        },
-      ),
+              count: state.recentUnreviewedCount > 0
+                  ? state.recentUnreviewedCount
+                  : null,
 
-      /// DUPLICATES
-      _HomeCard(
-        title: 'Duplicates',
-        subtitle: 'Clean up similar photos',
-        icon: Icons.photo_library_outlined,
-        gradient: _G.duplicates,
-        onOpen: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  const DuplicatesScreen(),
+              isCompleted: state.recentCompleted,
+              showTrash: state.hasPendingSummary,
+
+onTap: () {
+    if (state.recentUnreviewedCount > 0) {
+    _openSession(context, PhotoSessionType.recent);
+    return;
+  }
+if (state.hasPendingSummary) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => BlocProvider.value(
+        value: context.read<PhotoCubit>(),
+        child: PhotoDeleteSummaryScreen(
+          sessionTitle: 'Recents',
+        ),
+      ),
+    ),
+  );
+  return;
+}
+
+
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const RecentsScreen(),
+    ),
+  );
+},
             ),
-          );
-        },
-      ),
-    ];
 
-    return ListView(
-      padding: EdgeInsets.zero,
-      physics:
-          const BouncingScrollPhysics(),
-      children: [
-        for (final card in cards)
-          _SwipeStyleGradientRow(
-            gradient: card.gradient,
-            foreground: Colors.white,
-            label: card.title,
-            icon: card.icon,
-            badge: card.badge,
-            onTap: card.onOpen,
-          ),
-      ],
+            /// =========================
+            /// RANDOM
+            /// =========================
+            _SwipeStyleGradientRow(
+              gradient: _G.random,
+              foreground: Colors.white,
+              label: 'Random',
+              icon: Icons.shuffle_rounded,
+              onTap: () {
+                _openSession(context, PhotoSessionType.random);
+              },
+            ),
+
+            /// =========================
+            /// DUPLICATES
+            /// =========================
+            _SwipeStyleGradientRow(
+              gradient: _G.duplicates,
+              foreground: Colors.white,
+              label: 'Duplicates',
+              icon: Icons.photo_library_outlined,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const DuplicatesScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
-  void _openSession(
-    BuildContext context,
-    PhotoSessionType type,
-  ) {
+  void _openSession(BuildContext context, PhotoSessionType type) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => PhotoScreen(
-          sessionTitle:
-              _getSessionTitle(type),
+          sessionTitle: _getSessionTitle(type),
           onLoad: (cubit) async {
-            await cubit.loadSession(
-              type,
-            );
+            await cubit.loadSession(type);
           },
         ),
       ),
     );
   }
 
-  String _getSessionTitle(
-    PhotoSessionType type,
-  ) {
+  String _getSessionTitle(PhotoSessionType type) {
     switch (type) {
       case PhotoSessionType.anything:
         return "Anything";
-
       case PhotoSessionType.photos:
         return "Photos";
-
       case PhotoSessionType.videos:
         return "Videos";
-
       case PhotoSessionType.recent:
         return "Recents";
-
       case PhotoSessionType.random:
         return "Random";
-      
-      case PhotoSessionType.screenshots:  
+      case PhotoSessionType.screenshots:
         return "Screenshots";
-      
       case PhotoSessionType.livePhotos:
         return "Live Photos";
     }
   }
 }
 
-class _HomeCard {
-  const _HomeCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.gradient,
-    required this.onOpen,
-    this.badge,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Gradient gradient;
-  final VoidCallback onOpen;
-  final String? badge;
-}
-
-class _SwipeStyleGradientRow
-    extends StatelessWidget {
+class _SwipeStyleGradientRow extends StatelessWidget {
   const _SwipeStyleGradientRow({
     required this.gradient,
     required this.foreground,
     required this.label,
     required this.icon,
     required this.onTap,
-    this.badge,
+    this.count,
+    this.isCompleted = false,
+    this.showTrash = false,
   });
 
   final Gradient gradient;
@@ -157,7 +181,10 @@ class _SwipeStyleGradientRow
   final String label;
   final IconData icon;
   final VoidCallback onTap;
-  final String? badge;
+
+  final int? count;
+  final bool isCompleted;
+  final bool showTrash;
 
   static const double _rowHeight = 82;
 
@@ -166,89 +193,75 @@ class _SwipeStyleGradientRow
     return Material(
       color: Colors.transparent,
       child: Ink(
-        decoration:
-            BoxDecoration(
-          gradient: gradient,
-        ),
+        decoration: BoxDecoration(gradient: gradient),
         child: InkWell(
           onTap: onTap,
-          splashColor:
-              foreground.withOpacity(
-            0.14,
-          ),
-          highlightColor:
-              foreground.withOpacity(
-            0.06,
-          ),
+          splashColor: foreground.withOpacity(0.14),
+          highlightColor: foreground.withOpacity(0.06),
           child: SizedBox(
             height: _rowHeight,
             width: double.infinity,
             child: Padding(
-              padding:
-                  const EdgeInsets.only(
-                left: 22,
-                right: 18,
-              ),
+              padding: const EdgeInsets.only(left: 22, right: 18),
               child: Row(
                 children: [
                   Expanded(
-                    child: Align(
-                      alignment:
-                          Alignment.centerLeft,
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow:
-                            TextOverflow
-                                .ellipsis,
-                        style:
-                            TextStyle(
-                          fontSize: 21,
-                          fontWeight:
-                              FontWeight
-                                  .w900,
-                          letterSpacing:
-                              -0.35,
-                          color:
-                              foreground,
+                    child: Stack(
+                      alignment: Alignment.centerLeft,
+                      children: [
+                        Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.35,
+                            color: foreground,
+                          ),
                         ),
-                      ),
+                        if (isCompleted)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              height: 3,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
 
-                  if (badge != null) ...[
+                  if (count != null) ...[
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 6,
                       ),
-                      decoration:
-                          BoxDecoration(
-                        color:
-                            Colors.white,
-                        borderRadius:
-                            BorderRadius.circular(
-                          100,
-                        ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(100),
                       ),
                       child: Text(
-                        badge!,
-                        style:
-                            const TextStyle(
-                          color:
-                              Colors.black87,
-                          fontWeight:
-                              FontWeight
-                                  .w800,
+                        '$count',
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w900,
                           fontSize: 11,
                         ),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                  ],
 
-                    const SizedBox(
-                      width: 10,
+                  if (showTrash) ...[
+                    const Icon(
+                      Icons.delete_rounded,
+                      color: Colors.white,
+                      size: 24,
                     ),
+                    const SizedBox(width: 10),
                   ],
 
                   Icon(
@@ -267,38 +280,7 @@ class _SwipeStyleGradientRow
 }
 
 abstract final class _G {
-  static const LinearGradient anything =
-      LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [
-      Color(0xFF111827),
-      Color(0xFF374151),
-    ],
-  );
-
-  static const LinearGradient photos =
-      LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [
-      Color(0xFF06B6D4),
-      Color(0xFF2563EB),
-    ],
-  );
-
-  static const LinearGradient videos =
-      LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [
-      Color(0xFFEF4444),
-      Color(0xFFF97316),
-    ],
-  );
-
-  static const LinearGradient recents =
-      LinearGradient(
+  static const LinearGradient recents = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
     colors: [
@@ -307,8 +289,7 @@ abstract final class _G {
     ],
   );
 
-  static const LinearGradient random =
-      LinearGradient(
+  static const LinearGradient random = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
     colors: [
@@ -317,8 +298,7 @@ abstract final class _G {
     ],
   );
 
-  static const LinearGradient duplicates =
-      LinearGradient(
+  static const LinearGradient duplicates = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
     colors: [

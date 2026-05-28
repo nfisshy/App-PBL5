@@ -1,0 +1,212 @@
+A Dart VM Service on V2505A is available at: http://127.0.0.1:17066/V7n-4QDsJ7k=/
+E/MEMCWrapper(18817): MEMC_POST_PROCESSING_ENABLE_PROPERTY false.
+W/VSPA    (18817): Jni_setThreadSpeed write data pid = 18817, tid = 0, start = 1
+W/VSPA    (18817): Jni_setThreadSpeed write data pid = 18817, tid = 0, start = 0
+The Flutter DevTools debugger and profiler on V2505A is available at: http://127.0.0.1:9101?uri=http://127.0.0.1:17066/V7n-4QDsJ7k=/
+V/ImeFocusController(18817): onWindowFocus: com.android.internal.policy.DecorView{998fe75 V.E...... R.....I. 0,0-1440,3168}[MainActivity] softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE
+I/ImeTracker(18817): com.example.photoapp:3b2de37d: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+D/ProfileInstaller(18817): Installing profile for com.example.photoapp
+W/Glide   (18817): Failed to find GeneratedAppGlideModule. You should include an annotationProcessor compile dependency on com.github.bumptech.glide:compiler in your application and a @GlideModule annotated AppGlideModule implementation or LibraryGlideModules will be silently ignored
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/ExoPlayerImpl(18817): Init 3ccf745 [AndroidXMedia3/1.4.1] [PD2505, V2505A, vivo, 36]
+W/HWUI    (18817): Image decoding logging dropped!
+D/AudioSystem(18817): onNewService: media.audio_policy service obtained 0xb400007dbeecc4e0
+D/AudioSystem(18817): getService: checking for service media.audio_policy: 0xb400007dbeecc4e0
+I/xample.photoapp(18817): hiddenapi: Accessing hidden method Landroid/media/AudioTrack;->getLatency()I (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/media3/exoplayer/audio/AudioTrackPositionTracker; (domain=app) using reflection: allowed        
+D/VivoSpatializer(18817): checkGoogleApiEnabled, mGoogleApiEnabled: true, originalArdVersion: 36, deniedPkg: false, clientPkg: com.example.photoapp
+D/AudioSystem(18817): onNewServiceWithAdapter: media.audio_flinger service obtained 0xb400007e6eed72a0
+D/AudioSystem(18817): getService: checking for service media.audio_flinger: 0xb400007dbeecd6b0
+D/ImageReader_JNI(18817): ImageReader_init: ctx[0xb400007ddee1b410], 1x1, HalFormat[34], maxImages[5], ndkUsage[256], consumerUsage[256]
+E/ExoPlayerImplInternal(18817): Playback error
+E/ExoPlayerImplInternal(18817):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:736)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:706)
+E/ExoPlayerImplInternal(18817):       at android.os.Handler.dispatchMessage(Handler.java:110)
+E/ExoPlayerImplInternal(18817):       at android.os.Looper.loopOnce(Looper.java:266)
+E/ExoPlayerImplInternal(18817):       at android.os.Looper.loop(Looper.java:361)
+E/ExoPlayerImplInternal(18817):       at android.os.HandlerThread.run(HandlerThread.java:103)
+E/ExoPlayerImplInternal(18817):   Caused by: androidx.media3.common.ParserException: Malformed sample table (stbl) missing sample description (stsd){contentIsMalformed=true, dataType=1}
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.AtomParsers.parseTrak(AtomParsers.java:344)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.AtomParsers.parseTraks(AtomParsers.java:138)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.Mp4Extractor.processMoovAtom(Mp4Extractor.java:592)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.Mp4Extractor.processAtomEnded(Mp4Extractor.java:553)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.Mp4Extractor.readAtomHeader(Mp4Extractor.java:479)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.Mp4Extractor.read(Mp4Extractor.java:322)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.source.BundledExtractorsAdapter.read(BundledExtractorsAdapter.java:147)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1082)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+E/ExoPlayerImplInternal(18817):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+E/ExoPlayerImplInternal(18817):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+E/ExoPlayerImplInternal(18817):       at java.lang.Thread.run(Thread.java:1149)
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+E/flutter (18817): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled Exception: PlatformException(VideoError, Video player had error androidx.media3.exoplayer.ExoPlaybackException: Source error, null, null)
+W/HWUI    (18817): Image decoding logging dropped!
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/xample.photoapp(18817): vart_dgc, 8192KB,32MB,0.5
+I/xample.photoapp(18817): NativeAlloc concurrent copying GC freed 7630KB AllocSpace bytes, 271(23MB) LOS objects, 75% free, 8969KB(6660KB_64KB)/35MB, 2Fd, itvl 7.072s, cpu 24.688ms, paused 39us,50us total 25.545ms
+I/xample.photoapp(18817): vart_bigdata, last_report_time=1779529841055
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+I/xample.photoapp(18817): vart_dgc, 8192KB,32MB,0.5
+I/xample.photoapp(18817): NativeAlloc concurrent copying GC freed 2115KB AllocSpace bytes, 246(23MB) LOS objects, 75% free, 9167KB(6844KB_64KB)/35MB, 2Fd, itvl 475.591ms, cpu 22.341ms, paused 29us,10us total 30.782ms
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+D/HWUI    (18817): --- Failed to create image decoder with message 'unimplemented'
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+W/HWUI    (18817): Image decoding logging dropped!
+I/HWUI    (18817): decodeGainmap decodeColorType = 4
+W/HWUI    (18817): Image decoding logging dropped!
+W/libc    (18817): Access denied finding property "ro.vendor.vivo.software.ai.llm.disable"
+W/support-thread(18817): type=1400 audit(0.0:1840057): avc:  denied  { read } for  name="u:object_r:vendor_feature_prop:s0" dev="tmpfs" ino=516 scontext=u:r:untrusted_app:s0:c78,c257,c512,c768 tcontext=u:object_r:vendor_feature_prop:s0 tclass=file permissive=0 app=com.example.photoapp
+V/ActivityThread(18817): updateVmProcessStateForGc sceneId =2 state=197376
+I/xample.photoapp(18817): Open vivo delay for GC JIT .
+V/ActivityThread(18817): updateVmProcessStateForGc sceneId =2 state=196608
+I/xample.photoapp(18817): Close vivo delay for GC JIT .
+I/ExoPlayerImpl(18817): Init b9e70de [AndroidXMedia3/1.4.1] [PD2505, V2505A, vivo, 36]
+D/VivoSpatializer(18817): checkGoogleApiEnabled, mGoogleApiEnabled: true, originalArdVersion: 36, deniedPkg: false, clientPkg: com.example.photoapp
+D/ImageReader_JNI(18817): ImageReader_init: ctx[0xb400007ddee19500], 1x1, HalFormat[34], maxImages[5], ndkUsage[256], consumerUsage[256]
+E/ExoPlayerImplInternal(18817): Playback error
+E/ExoPlayerImplInternal(18817):   androidx.media3.exoplayer.ExoPlaybackException: Source error
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleIoException(ExoPlayerImplInternal.java:736)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.ExoPlayerImplInternal.handleMessage(ExoPlayerImplInternal.java:706)
+E/ExoPlayerImplInternal(18817):       at android.os.Handler.dispatchMessage(Handler.java:110)
+E/ExoPlayerImplInternal(18817):       at android.os.Looper.loopOnce(Looper.java:266)
+E/ExoPlayerImplInternal(18817):       at android.os.Looper.loop(Looper.java:361)
+E/ExoPlayerImplInternal(18817):       at android.os.HandlerThread.run(HandlerThread.java:103)
+E/ExoPlayerImplInternal(18817):   Caused by: androidx.media3.common.ParserException: Malformed sample table (stbl) missing sample description (stsd){contentIsMalformed=true, dataType=1}
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.AtomParsers.parseTrak(AtomParsers.java:344)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.AtomParsers.parseTraks(AtomParsers.java:138)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.Mp4Extractor.processMoovAtom(Mp4Extractor.java:592)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.Mp4Extractor.processAtomEnded(Mp4Extractor.java:553)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.Mp4Extractor.readAtomHeader(Mp4Extractor.java:479)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.extractor.mp4.Mp4Extractor.read(Mp4Extractor.java:322)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.source.BundledExtractorsAdapter.read(BundledExtractorsAdapter.java:147)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.source.ProgressiveMediaPeriod$ExtractingLoadable.load(ProgressiveMediaPeriod.java:1082)
+E/ExoPlayerImplInternal(18817):       at androidx.media3.exoplayer.upstream.Loader$LoadTask.run(Loader.java:421)
+E/ExoPlayerImplInternal(18817):       at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+E/ExoPlayerImplInternal(18817):       at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+E/ExoPlayerImplInternal(18817):       at java.lang.Thread.run(Thread.java:1149)
+E/flutter (18817): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled Exception: PlatformException(VideoError, Video player had error androidx.media3.exoplayer.ExoPlaybackException: Source error, null, null)
+I/xample.photoapp(18817): vart_dgc, 8192KB,32MB,0.5
+I/xample.photoapp(18817): NativeAlloc concurrent copying GC freed 3278KB AllocSpace bytes, 242(19MB) LOS objects, 79% free, 6419KB(3812KB_64KB)/30MB, 2Fd, itvl 11.182s, cpu 21.869ms, paused 33us,82us total 26.163ms

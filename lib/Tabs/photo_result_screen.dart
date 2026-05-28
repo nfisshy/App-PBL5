@@ -8,12 +8,14 @@ class SwipeResultScreen
     required this.keepCount,
     required this.deleteCount,
     required this.savedBytes,
+    required this.totalSavedBytes,
   });
 
   final String sessionTitle;
   final int keepCount;
   final int deleteCount;
   final int savedBytes;
+  final int totalSavedBytes;
 
   static const Color _green =
       Color(0xFF72FFB4);
@@ -58,9 +60,12 @@ class SwipeResultScreen
 
                     GestureDetector(
                       onTap: () {
-                        Navigator.pop(
-                          context,
-                        );
+                    Navigator.popUntil(
+                      context,
+                      (route) =>
+                          route
+                              .isFirst,
+                    );
                       },
 
                       child: Icon(
@@ -247,7 +252,7 @@ class SwipeResultScreen
 
               /// ALL TIME
               Text(
-                "$savedText saved all-time",
+                  "${_formatBytes(totalSavedBytes)} saved all-time",
 
                 style: TextStyle(
                   color:

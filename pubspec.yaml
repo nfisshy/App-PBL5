@@ -43,6 +43,8 @@ dependencies:
   geocoding: ^3.0.0
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  ffmpeg_kit_flutter_new: ^3.0.0
+  path_provider: ^2.1.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

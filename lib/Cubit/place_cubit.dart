@@ -24,15 +24,10 @@ class PlacesCubit extends Cubit<PlacesState> {
     );
 
     try {
-      /// =========================
-      /// PERMISSION
-      /// =========================
-      final permission =
-          await PhotoManager.requestPermissionExtend(
-        requestOption:
-            const PermissionRequestOption(
-          androidPermission:
-              AndroidPermission(
+      // ─── PERMISSION ───────────────────────────────────────────
+      final permission = await PhotoManager.requestPermissionExtend(
+        requestOption: const PermissionRequestOption(
+          androidPermission: AndroidPermission(
             type: RequestType.common,
             mediaLocation: true,
           ),
@@ -40,170 +35,172 @@ class PlacesCubit extends Cubit<PlacesState> {
       );
 
       if (!permission.hasAccess) {
-        emit(
-          state.copyWith(
-            isLoading: false,
-            loadFail: true,
-          ),
-        );
+        emit(state.copyWith(isLoading: false, loadFail: true));
         return;
       }
 
-      /// =========================
-      /// LOAD ALBUM
-      /// =========================
-      final albums =
-          await PhotoManager.getAssetPathList(
+      // ─── LOAD ALBUM ───────────────────────────────────────────
+      final albums = await PhotoManager.getAssetPathList(
         type: RequestType.image,
         onlyAll: true,
       );
 
       if (albums.isEmpty) {
+        emit(state.copyWith(isLoading: false, loadFail: true));
+        return;
+      }
+
+      // ─── LOAD ASSETS ──────────────────────────────────────────
+      // Giảm từ 5000 → 2000, ảnh có GPS thường ít hơn nhiều
+      final assets = await albums.first.getAssetListPaged(
+        page: 0,
+        size: 2000,
+      );
+
+      if (assets.isEmpty) {
         emit(
           state.copyWith(
             isLoading: false,
-            loadFail: true,
+            loadFail: false,
+            loadSuccess: true,
+            places: [],
           ),
         );
         return;
       }
 
-      /// =========================
-      /// LOAD ASSETS
-      /// =========================
-      final assets =
-          await albums.first.getAssetListPaged(
-        page: 0,
-        size: 5000,
-      );
+      // ─── PHASE 1: Batch parallel latlng ───────────────────────
+      // Gộp tọa độ gần nhau (2 chữ số thập phân ≈ ~1km)
+      // → giảm số lần reverse geocoding cần thực hiện
+      const int latlngBatchSize = 20;
 
-      /// =========================
-      /// UNIQUE LOCATIONS
-      /// =========================
-      final Set<String> locations =
-          <String>{};
+      // cache key → location name (tránh geocode trùng)
+      final Map<String, String> geocodeCache = {};
 
-      /// cache reverse geocoding
-      final Map<String, String> cache =
-          {};
+      // key → có trong set chưa (tránh geocode trùng key)
+      final Set<String> resolvedKeys = {};
 
-      for (final asset in assets) {
-        try {
-          /// =========================
-          /// LAT LNG
-          /// =========================
-          final latlng =
-              await asset.latlngAsync();
+      // Danh sách unique keys cần geocode (chưa có trong cache)
+      final List<({String key, double lat, double lng})> pendingGeocode = [];
 
-          if (latlng == null) {
-            continue;
-          }
+      // ─── Thu thập tất cả unique keys trước ───────────────────
+      // Batch latlng song song để nhanh
+      for (int i = 0; i < assets.length; i += latlngBatchSize) {
+        final batch = assets.skip(i).take(latlngBatchSize).toList();
 
-          final lat =
-              latlng.latitude;
-          final lng =
-              latlng.longitude;
+        final latlngResults = await Future.wait(
+          batch.map((asset) async {
+            try {
+              return await asset.latlngAsync();
+            } catch (_) {
+              return null;
+            }
+          }),
+        );
 
-          /// invalid GPS
-          if (lat == 0 && lng == 0) {
-            continue;
-          }
+        for (final latlng in latlngResults) {
+          if (latlng == null) continue;
+          final lat = latlng.latitude;
+          final lng = latlng.longitude;
+          if (lat == 0 && lng == 0) continue;
 
-          /// =========================
-          /// CACHE KEY
-          /// =========================
           final key =
               "${lat.toStringAsFixed(2)},${lng.toStringAsFixed(2)}";
 
-          /// already resolved
-          if (cache.containsKey(key)) {
-            locations.add(cache[key]!);
-            continue;
+          if (resolvedKeys.contains(key)) continue;
+          resolvedKeys.add(key);
+
+          // Chưa có trong cache → cần geocode
+          if (!geocodeCache.containsKey(key)) {
+            pendingGeocode.add((key: key, lat: lat, lng: lng));
           }
+        }
+      }
 
-          /// =========================
-          /// REVERSE GEOCODING
-          /// =========================
-          final placemarks =
-              await placemarkFromCoordinates(
-            lat,
-            lng,
-          );
+      if (pendingGeocode.isEmpty) {
+        emit(
+          state.copyWith(
+            isLoading: false,
+            loadFail: false,
+            loadSuccess: true,
+            places: [],
+          ),
+        );
+        return;
+      }
 
-          if (placemarks.isEmpty) {
-            continue;
-          }
+      // ─── PHASE 2: Batch parallel reverse geocoding ────────────
+      // Geocoding là network call → batch nhỏ hơn (5) để tránh rate limit
+      // Emit sau mỗi batch để UI hiện places dần
+      const int geocodeBatchSize = 5;
+      final Set<String> locationSet = {};
 
-          final place =
-              placemarks.first;
+      for (int i = 0; i < pendingGeocode.length; i += geocodeBatchSize) {
+        final batch =
+            pendingGeocode.skip(i).take(geocodeBatchSize).toList();
 
-          String? location;
+        final batchResults = await Future.wait(
+          batch.map((item) async {
+            try {
+              final placemarks = await placemarkFromCoordinates(
+                item.lat,
+                item.lng,
+              );
 
-          /// CITY
-          if ((place.locality ?? "")
-              .isNotEmpty) {
-            location =
-                place.locality!;
-          }
+              if (placemarks.isEmpty) return null;
 
-          /// DISTRICT
-          else if ((place
-                      .subAdministrativeArea ??
-                  "")
-              .isNotEmpty) {
-            location =
-                place
-                    .subAdministrativeArea!;
-          }
+              final place = placemarks.first;
+              String? location;
 
-          /// STATE
-          else if ((place
-                      .administrativeArea ??
-                  "")
-              .isNotEmpty) {
-            location =
-                place
-                    .administrativeArea!;
-          }
+              if ((place.locality ?? "").isNotEmpty) {
+                location = place.locality!;
+              } else if ((place.subAdministrativeArea ?? "").isNotEmpty) {
+                location = place.subAdministrativeArea!;
+              } else if ((place.administrativeArea ?? "").isNotEmpty) {
+                location = place.administrativeArea!;
+              }
 
-          if (location == null) {
-            continue;
-          }
+              if (location != null) {
+                geocodeCache[item.key] = location;
+              }
 
-          cache[key] = location;
+              return location;
+            } catch (e) {
+              debugPrint("GEOCODE ERROR: $e");
+              return null;
+            }
+          }),
+        );
 
-          locations.add(location);
-        } catch (e) {
-          debugPrint(
-            "PLACE ERROR: $e",
+        for (final loc in batchResults) {
+          if (loc != null) locationSet.add(loc);
+        }
+
+        // Emit sau mỗi batch → UI hiện places ngay khi có
+        if (locationSet.isNotEmpty) {
+          emit(
+            state.copyWith(
+              isLoading: false,
+              loadFail: false,
+              loadSuccess: true,
+              places: locationSet.toList()..sort(),
+            ),
           );
         }
       }
 
-      /// =========================
-      /// SUCCESS
-      /// =========================
+      // ─── Final emit đầy đủ ────────────────────────────────────
       emit(
         state.copyWith(
           isLoading: false,
           loadFail: false,
           loadSuccess: true,
-          places:
-              locations.toList()
-                ..sort(),
+          places: locationSet.toList()..sort(),
         ),
       );
     } catch (e) {
-      debugPrint(
-        "LOAD PLACES ERROR: $e",
-      );
-
-      emit(
-        state.copyWith(
-          isLoading: false,
-          loadFail: true,
-        ),
-      );
+      debugPrint("LOAD PLACES ERROR: $e");
+      emit(state.copyWith(isLoading: false, loadFail: true));
     }
   }
 }

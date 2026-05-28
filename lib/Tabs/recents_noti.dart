@@ -100,7 +100,7 @@ class RecentsScreen extends StatelessWidget {
               child: SizedBox(
                 height: 115,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {Navigator.pop(context);},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF74E0A0),
                     elevation: 0,

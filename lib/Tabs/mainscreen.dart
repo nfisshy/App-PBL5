@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../Cubit/photo_cubit.dart';
 
 import 'album_tab.dart';
 import 'home_tab.dart';
@@ -40,6 +43,16 @@ class _MainScreenState
         PageController(
           initialPage: currentIndex,
         );
+
+    /// =========================
+    /// LOAD HOME RECENT STATUS
+    /// =========================
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) {
+      context
+          .read<PhotoCubit>()
+          .loadRecentHomeStatus();
+    });
   }
 
   @override
@@ -71,6 +84,7 @@ class _MainScreenState
 
       body: SafeArea(
         bottom: false,
+
         child: Column(
           children: [
             /// HEADER
@@ -92,6 +106,11 @@ class _MainScreenState
                     currentIndex =
                         index;
                   });
+
+                  /// refresh recent status
+                  context
+                      .read<PhotoCubit>()
+                      .loadRecentHomeStatus();
                 },
 
                 children: pages,

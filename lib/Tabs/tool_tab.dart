@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'photo_screen.dart';
 
+import 'photo_screen.dart';
+import 'trim_home_screen.dart';
+import 'compress_home.dart';
 class ToolTab extends StatelessWidget {
   const ToolTab({super.key});
 
@@ -56,12 +58,62 @@ class ToolTab extends StatelessWidget {
             label: item.title,
             icon: item.icon,
             onTap: () {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(
-              //     builder: (_) => const PhotoScreen(),
-              //   ),
-              // );
+              switch (item.title) {
+                case 'Colorize':
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (_) => const ColorizeHomeScreen(),
+                  //   ),
+                  // );
+                  break;
+
+                case 'Compress':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CompressHomeScreen(),
+                    ),
+                  );
+                  break;
+
+                case 'Enhance':
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (_) => const EnhanceHomeScreen(),
+                  //   ),
+                  // );
+                  break;
+
+                case 'Remove BG':
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (_) => const RemoveBgHomeScreen(),
+                  //   ),
+                  // );
+                  break;
+
+                case 'Split':
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (_) => const SplitHomeScreen(),
+                  //   ),
+                  // );
+                  break;
+
+                case 'Trim':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const TrimHomeScreen(),
+                    ),
+                  );
+                  break;
+              }
             },
           ),
       ],
@@ -105,35 +157,49 @@ class _SwipeStyleGradientRow extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Ink(
-        decoration: BoxDecoration(gradient: gradient),
+        decoration: BoxDecoration(
+          gradient: gradient,
+        ),
         child: InkWell(
           onTap: onTap,
-          splashColor: foreground.withOpacity(0.14),
-          highlightColor: foreground.withOpacity(0.06),
+          splashColor:
+              foreground.withOpacity(0.14),
+          highlightColor:
+              foreground.withOpacity(0.06),
           child: SizedBox(
             height: _rowHeight,
             width: double.infinity,
             child: Padding(
-              padding: const EdgeInsets.only(left: 22, right: 18),
+              padding: const EdgeInsets.only(
+                left: 22,
+                right: 18,
+              ),
               child: Row(
                 children: [
                   Expanded(
                     child: Align(
-                      alignment: Alignment.centerLeft,
+                      alignment:
+                          Alignment.centerLeft,
                       child: Text(
                         label,
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                            TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 21,
-                          fontWeight: FontWeight.w900,
+                          fontWeight:
+                              FontWeight.w900,
                           letterSpacing: -0.35,
                           color: foreground,
                         ),
                       ),
                     ),
                   ),
-                  Icon(icon, color: foreground, size: 34),
+                  Icon(
+                    icon,
+                    color: foreground,
+                    size: 34,
+                  ),
                 ],
               ),
             ),
@@ -145,34 +211,63 @@ class _SwipeStyleGradientRow extends StatelessWidget {
 }
 
 abstract final class _G {
-  static const LinearGradient colorize = LinearGradient(
+  static const LinearGradient colorize =
+      LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [Color(0xFFFF9966), Color(0xFFFF5E62)],
+    colors: [
+      Color(0xFFFF9966),
+      Color(0xFFFF5E62),
+    ],
   );
-  static const LinearGradient compress = LinearGradient(
+
+  static const LinearGradient compress =
+      LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [Color(0xFF00C9FF), Color(0xFF92FE9D)],
+    colors: [
+      Color(0xFF00C9FF),
+      Color(0xFF92FE9D),
+    ],
   );
-  static const LinearGradient enhance = LinearGradient(
+
+  static const LinearGradient enhance =
+      LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [Color(0xFF7F00FF), Color(0xFFE100FF)],
+    colors: [
+      Color(0xFF7F00FF),
+      Color(0xFFE100FF),
+    ],
   );
-  static const LinearGradient removeBg = LinearGradient(
+
+  static const LinearGradient removeBg =
+      LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [Color(0xFF4FACFE), Color(0xFF00F2FE)],
+    colors: [
+      Color(0xFF4FACFE),
+      Color(0xFF00F2FE),
+    ],
   );
-  static const LinearGradient split = LinearGradient(
+
+  static const LinearGradient split =
+      LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [Color(0xFF43E97B), Color(0xFF38F9D7)],
+    colors: [
+      Color(0xFF43E97B),
+      Color(0xFF38F9D7),
+    ],
   );
-  static const LinearGradient trim = LinearGradient(
+
+  static const LinearGradient trim =
+      LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [Color(0xFFFF5F6D), Color(0xFFFFC371)],
+    colors: [
+      Color(0xFFFF5F6D),
+      Color(0xFFFFC371),
+    ],
   );
 }
