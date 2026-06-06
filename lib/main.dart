@@ -1,46 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'Cubit/photo_cubit.dart';
-import 'Tabs/mainscreen.dart';
-
-import 'Widgets/streak/streak_scope.dart';
-import 'Widgets/streak/streak_controller.dart';
-
-/// 🔥 GLOBAL RouteObserver (PHẢI 1 INSTANCE DUY NHẤT)
-final RouteObserver<ModalRoute<void>> routeObserver =
-    RouteObserver<ModalRoute<void>>();
 
 void main() {
-  runApp(
-    StreakScope(
-      controller: StreakController(),
-      child: BlocProvider(
-        create: (_) => PhotoCubit(),
-        child: const PhotoApp(),
-      ),
-    ),
-  );
+  runApp(const MyApp());
 }
 
-class PhotoApp extends StatelessWidget {
-  const PhotoApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'PhotoApp',
-
-      /// 🔥 GẮN OBSERVER Ở ĐÂY
-      navigatorObservers: [routeObserver],
-
+      title: 'Flutter App',
       theme: ThemeData(
-        fontFamily: 'SF Pro Display',
-        scaffoldBackgroundColor: const Color(0xFFF6F6F8),
+        primarySwatch: Colors.blue,
       ),
+      home: const HomePage(),
+    );
+  }
+}
 
-      home: const MainScreen(),
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Home'),
+      ),
+      body: const Center(
+        child: Text('Hello World'),
+      ),
     );
   }
 }
