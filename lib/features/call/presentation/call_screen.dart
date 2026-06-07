@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,8 +11,16 @@ import 'package:photomanager/features/call/presentation/signaling/call_signaling
 import 'package:photomanager/features/call/presentation/widgets/call_control_button.dart';
 import 'package:photomanager/features/call/presentation/widgets/call_status_banner.dart';
 import 'package:photomanager/features/call/presentation/widgets/conversation_message_list.dart';
-import 'package:photomanager/features/call/presentation/widgets/video_placeholder.dart';
 import 'package:photomanager/features/conversation/presentation/conversation_providers.dart';
+import 'package:photomanager/features/media/domain/audio_stream_state.dart';
+import 'package:photomanager/features/media/domain/camera_state.dart';
+import 'package:photomanager/features/media/domain/microphone_state.dart';
+import 'package:photomanager/features/media/domain/video_stream_state.dart';
+import 'package:photomanager/features/media/presentation/media_providers.dart';
+import 'package:photomanager/features/media/presentation/widgets/camera_preview_placeholder.dart';
+import 'package:photomanager/features/media/presentation/widgets/media_status_badge.dart';
+import 'package:photomanager/features/media/presentation/widgets/microphone_indicator.dart';
+import 'package:photomanager/features/media/presentation/widgets/stream_statistics_card.dart';
 import 'package:photomanager/features/realtime/domain/connection_status.dart';
 import 'package:photomanager/features/realtime/presentation/realtime_providers.dart';
 import 'package:photomanager/features/realtime/presentation/widgets/connection_status_badge.dart';
@@ -30,6 +40,22 @@ class CallScreen extends ConsumerStatefulWidget {
 
 class _CallScreenState extends ConsumerState<CallScreen> {
   bool _signalingStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(ref.read(mediaActionsProvider).initialize());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    unawaited(ref.read(mediaActionsProvider).dispose());
+    super.dispose();
+  }
 
   Future<void> _confirmEndCall() async {
     final shouldEndCall = await showDialog<bool>(
@@ -66,6 +92,14 @@ class _CallScreenState extends ConsumerState<CallScreen> {
         ref.watch(callStatusProvider).valueOrNull ?? CallStatus.idle;
     final realtimeStatus = ref.watch(connectionStatusProvider).valueOrNull ??
         ConnectionStatus.disconnected;
+    final cameraState =
+        ref.watch(cameraStateProvider).valueOrNull ?? const CameraState.idle();
+    final microphoneState = ref.watch(microphoneStateProvider).valueOrNull ??
+        const MicrophoneState.idle();
+    final videoState = ref.watch(videoStreamStateProvider).valueOrNull ??
+        const VideoStreamState.idle();
+    final audioState = ref.watch(audioStreamStateProvider).valueOrNull ??
+        const AudioStreamState.idle();
 
     if (participant != null) {
       _startSignaling(participant);
@@ -101,6 +135,11 @@ class _CallScreenState extends ConsumerState<CallScreen> {
               : _CallContent(
                   state: state,
                   signalingStatus: signalingStatus,
+                  cameraState: cameraState,
+                  microphoneState: microphoneState,
+                  videoState: videoState,
+                  audioState: audioState,
+                  mediaActions: ref.read(mediaActionsProvider),
                   onToggleMic: () {
                     ref
                         .read(callStateProvider(widget.username).notifier)
@@ -133,12 +172,22 @@ class _CallContent extends StatelessWidget {
   const _CallContent({
     required this.state,
     required this.signalingStatus,
+    required this.cameraState,
+    required this.microphoneState,
+    required this.videoState,
+    required this.audioState,
+    required this.mediaActions,
     required this.onToggleMic,
     required this.onEndCall,
   });
 
   final CallState state;
   final CallStatus signalingStatus;
+  final CameraState cameraState;
+  final MicrophoneState microphoneState;
+  final VideoStreamState videoState;
+  final AudioStreamState audioState;
+  final MediaActions mediaActions;
   final VoidCallback onToggleMic;
   final VoidCallback onEndCall;
 
@@ -155,7 +204,45 @@ class _CallContent extends StatelessWidget {
                 children: [
                   CallStatusBanner(status: signalingStatus),
                   const SizedBox(height: 16),
-                  const VideoPlaceholder(),
+                  CameraPreviewPlaceholder(state: cameraState),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      MediaStatusBadge(
+                        label: 'Camera',
+                        state: cameraState.connectionState,
+                      ),
+                      MediaStatusBadge(
+                        label: 'Microphone',
+                        state: microphoneState.connectionState,
+                      ),
+                      MediaStatusBadge(
+                        label: 'Video',
+                        state: videoState.connectionState,
+                      ),
+                      MediaStatusBadge(
+                        label: 'Audio',
+                        state: audioState.connectionState,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  MicrophoneIndicator(state: microphoneState),
+                  const SizedBox(height: 12),
+                  StreamStatisticsCard(
+                    videoState: videoState,
+                    audioState: audioState,
+                  ),
+                  const SizedBox(height: 12),
+                  _MediaControls(
+                    cameraState: cameraState,
+                    microphoneState: microphoneState,
+                    videoState: videoState,
+                    audioState: audioState,
+                    actions: mediaActions,
+                  ),
                   const SizedBox(height: 16),
                   _ParticipantCard(participant: state.participant),
                   const SizedBox(height: 24),
@@ -190,6 +277,69 @@ class _CallContent extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaControls extends StatelessWidget {
+  const _MediaControls({
+    required this.cameraState,
+    required this.microphoneState,
+    required this.videoState,
+    required this.audioState,
+    required this.actions,
+  });
+
+  final CameraState cameraState;
+  final MicrophoneState microphoneState;
+  final VideoStreamState videoState;
+  final AudioStreamState audioState;
+  final MediaActions actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final isStreaming = videoState.isStreaming || audioState.isStreaming;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton(
+              onPressed: cameraState.isEnabled ? null : actions.enableCamera,
+              child: const Text('Enable Camera'),
+            ),
+            OutlinedButton(
+              onPressed: cameraState.isEnabled ? actions.disableCamera : null,
+              child: const Text('Disable Camera'),
+            ),
+            OutlinedButton(
+              onPressed: actions.switchCamera,
+              child: const Text('Switch Camera'),
+            ),
+            OutlinedButton(
+              onPressed:
+                  microphoneState.isMuted ? null : actions.muteMicrophone,
+              child: const Text('Mute Microphone'),
+            ),
+            OutlinedButton(
+              onPressed:
+                  microphoneState.isMuted ? actions.unmuteMicrophone : null,
+              child: const Text('Unmute Microphone'),
+            ),
+            FilledButton(
+              onPressed: isStreaming ? null : actions.startStreams,
+              child: const Text('Start Stream'),
+            ),
+            FilledButton.tonal(
+              onPressed: isStreaming ? actions.stopStreams : null,
+              child: const Text('Stop Stream'),
             ),
           ],
         ),

@@ -5,6 +5,12 @@ import 'package:photomanager/app/router/app_routes.dart';
 import 'package:photomanager/features/auth/presentation/auth_controller.dart';
 import 'package:photomanager/features/call/domain/call_participant.dart';
 import 'package:photomanager/features/call/presentation/signaling/call_signaling_providers.dart';
+import 'package:photomanager/features/media/domain/audio_stream_state.dart';
+import 'package:photomanager/features/media/domain/camera_state.dart';
+import 'package:photomanager/features/media/domain/microphone_state.dart';
+import 'package:photomanager/features/media/domain/video_stream_state.dart';
+import 'package:photomanager/features/media/presentation/media_providers.dart';
+import 'package:photomanager/features/media/presentation/widgets/media_status_badge.dart';
 import 'package:photomanager/features/realtime/domain/connection_status.dart';
 import 'package:photomanager/features/realtime/presentation/realtime_providers.dart';
 import 'package:photomanager/features/realtime/presentation/widgets/connection_status_badge.dart';
@@ -17,6 +23,14 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).user;
     final realtimeStatus = ref.watch(connectionStatusProvider).valueOrNull ??
         ConnectionStatus.disconnected;
+    final cameraState =
+        ref.watch(cameraStateProvider).valueOrNull ?? const CameraState.idle();
+    final microphoneState = ref.watch(microphoneStateProvider).valueOrNull ??
+        const MicrophoneState.idle();
+    final videoState = ref.watch(videoStreamStateProvider).valueOrNull ??
+        const VideoStreamState.idle();
+    final audioState = ref.watch(audioStreamStateProvider).valueOrNull ??
+        const AudioStreamState.idle();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
@@ -74,9 +88,71 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.person_outline,
                   label: 'Profile',
                 ),
+                const SizedBox(height: 12),
+                _MediaDiagnosticsCard(
+                  cameraState: cameraState,
+                  microphoneState: microphoneState,
+                  videoState: videoState,
+                  audioState: audioState,
+                ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaDiagnosticsCard extends StatelessWidget {
+  const _MediaDiagnosticsCard({
+    required this.cameraState,
+    required this.microphoneState,
+    required this.videoState,
+    required this.audioState,
+  });
+
+  final CameraState cameraState;
+  final MicrophoneState microphoneState;
+  final VideoStreamState videoState;
+  final AudioStreamState audioState;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Media Diagnostics',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                MediaStatusBadge(
+                  label: 'Camera',
+                  state: cameraState.connectionState,
+                ),
+                MediaStatusBadge(
+                  label: 'Microphone',
+                  state: microphoneState.connectionState,
+                ),
+                MediaStatusBadge(
+                  label: 'Video',
+                  state: videoState.connectionState,
+                ),
+                MediaStatusBadge(
+                  label: 'Audio',
+                  state: audioState.connectionState,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
