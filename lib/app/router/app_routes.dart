@@ -6,11 +6,12 @@ abstract final class AppRoutes {
   // Reserved route paths for future feature implementations.
   static const contacts = '/contacts';
   static const contactDetails = '/contacts/:username';
-  static const call = '/call';
+  static const call = '/call/:username';
   static const conversation = '/conversation';
   static const profile = '/profile';
   static const speech = '/speech';
   static const video = '/video';
 
   static String contactDetail(String username) => '/contacts/$username';
+  static String callRoute(String username) => '/call/$username';
 }

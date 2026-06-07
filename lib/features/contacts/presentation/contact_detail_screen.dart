@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:photomanager/app/router/app_routes.dart';
 import 'package:photomanager/features/contacts/domain/contact.dart';
 import 'package:photomanager/features/contacts/presentation/contacts_providers.dart';
 import 'package:photomanager/shared/widgets/app_loading_indicator.dart';
@@ -68,11 +70,9 @@ class _ContactDetails extends StatelessWidget {
                 const SizedBox(height: 32),
                 PrimaryButton(
                   label: 'Call',
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Call feature coming soon')),
-                    );
-                  },
+                  onPressed: () => context.push(
+                    AppRoutes.callRoute(contact.username),
+                  ),
                 ),
               ],
             ),
