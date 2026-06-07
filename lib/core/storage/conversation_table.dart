@@ -9,7 +9,9 @@ class ConversationTable extends Table {
 
   TextColumn get participantDisplayName => text()();
 
-  TextColumn get sender => text()();
+  TextColumn get senderUsername => text()();
+
+  TextColumn get senderDisplayName => text()();
 
   TextColumn get message => text()();
 

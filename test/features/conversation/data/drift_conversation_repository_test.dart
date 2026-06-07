@@ -76,7 +76,8 @@ ConversationMessage _message(
     conversationId: conversationId,
     participantUsername: participantUsername,
     participantDisplayName: participantDisplayName,
-    sender: 'HUY',
+    senderUsername: 'huy',
+    senderDisplayName: 'HUY',
     message: message,
     createdAt: DateTime.utc(2026, 1, 1, 0, 0, second),
   );

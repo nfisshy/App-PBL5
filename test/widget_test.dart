@@ -48,6 +48,9 @@ void main() {
     expect(find.text('Contacts'), findsOneWidget);
     expect(find.text('Conversation History'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 }
 

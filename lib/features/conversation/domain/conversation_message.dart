@@ -3,7 +3,8 @@ class ConversationMessage {
     required this.conversationId,
     required this.participantUsername,
     required this.participantDisplayName,
-    required this.sender,
+    required this.senderUsername,
+    required this.senderDisplayName,
     required this.message,
     required this.createdAt,
     this.id,
@@ -13,7 +14,8 @@ class ConversationMessage {
   final String conversationId;
   final String participantUsername;
   final String participantDisplayName;
-  final String sender;
+  final String senderUsername;
+  final String senderDisplayName;
   final String message;
   final DateTime createdAt;
 }

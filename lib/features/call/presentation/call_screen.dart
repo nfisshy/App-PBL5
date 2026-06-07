@@ -8,6 +8,9 @@ import 'package:photomanager/features/call/presentation/widgets/call_control_but
 import 'package:photomanager/features/call/presentation/widgets/conversation_message_list.dart';
 import 'package:photomanager/features/call/presentation/widgets/video_placeholder.dart';
 import 'package:photomanager/features/conversation/presentation/conversation_providers.dart';
+import 'package:photomanager/features/realtime/domain/connection_status.dart';
+import 'package:photomanager/features/realtime/presentation/realtime_providers.dart';
+import 'package:photomanager/features/realtime/presentation/widgets/connection_status_badge.dart';
 import 'package:photomanager/shared/widgets/app_loading_indicator.dart';
 
 class CallScreen extends ConsumerWidget {
@@ -46,6 +49,8 @@ class CallScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final callState = ref.watch(callStateProvider(username));
     final participant = callState.valueOrNull?.participant;
+    final realtimeStatus = ref.watch(connectionStatusProvider).valueOrNull ??
+        ConnectionStatus.disconnected;
 
     if (participant != null) {
       ref.watch(
@@ -63,6 +68,10 @@ class CallScreen extends ConsumerWidget {
         title: Text(
           participant == null ? 'Call' : 'Call with ${participant.displayName}',
         ),
+        actions: [
+          Center(child: ConnectionStatusBadge(status: realtimeStatus)),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: callState.when(

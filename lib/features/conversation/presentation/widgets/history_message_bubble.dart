@@ -24,7 +24,7 @@ class HistoryMessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              message.sender,
+              message.senderDisplayName,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: colorScheme.primary,
                   ),

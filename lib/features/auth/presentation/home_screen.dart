@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photomanager/app/router/app_routes.dart';
 import 'package:photomanager/features/auth/presentation/auth_controller.dart';
+import 'package:photomanager/features/realtime/domain/connection_status.dart';
+import 'package:photomanager/features/realtime/presentation/realtime_providers.dart';
+import 'package:photomanager/features/realtime/presentation/widgets/connection_status_badge.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -10,6 +13,8 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user;
+    final realtimeStatus = ref.watch(connectionStatusProvider).valueOrNull ??
+        ConnectionStatus.disconnected;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
@@ -32,6 +37,8 @@ class HomeScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
+                const SizedBox(height: 24),
+                _RealtimeStatusCard(status: realtimeStatus),
                 const SizedBox(height: 32),
                 _FeatureButton(
                   icon: Icons.contacts_outlined,
@@ -52,6 +59,29 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RealtimeStatusCard extends StatelessWidget {
+  const _RealtimeStatusCard({required this.status});
+
+  final ConnectionStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text('Realtime Status'),
+            ),
+            ConnectionStatusBadge(status: status),
+          ],
         ),
       ),
     );

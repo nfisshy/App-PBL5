@@ -26,7 +26,8 @@ void main() {
       conversationId: 'dat',
       participantUsername: 'dat',
       participantDisplayName: 'Nguyen Tien Dat',
-      sender: 'HUY',
+      senderUsername: 'huy',
+      senderDisplayName: 'HUY',
       message: 'Xin chào',
       createdAt: DateTime.utc(2026, 1, 1),
     );

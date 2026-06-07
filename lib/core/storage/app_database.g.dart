@@ -36,11 +36,18 @@ class $ConversationTableTable extends ConversationTable
   late final GeneratedColumn<String> participantDisplayName =
       GeneratedColumn<String>('participant_display_name', aliasedName, false,
           type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _senderMeta = const VerificationMeta('sender');
+  static const VerificationMeta _senderUsernameMeta =
+      const VerificationMeta('senderUsername');
   @override
-  late final GeneratedColumn<String> sender = GeneratedColumn<String>(
-      'sender', aliasedName, false,
+  late final GeneratedColumn<String> senderUsername = GeneratedColumn<String>(
+      'sender_username', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _senderDisplayNameMeta =
+      const VerificationMeta('senderDisplayName');
+  @override
+  late final GeneratedColumn<String> senderDisplayName =
+      GeneratedColumn<String>('sender_display_name', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _messageMeta =
       const VerificationMeta('message');
   @override
@@ -59,7 +66,8 @@ class $ConversationTableTable extends ConversationTable
         conversationId,
         participantUsername,
         participantDisplayName,
-        sender,
+        senderUsername,
+        senderDisplayName,
         message,
         createdAt
       ];
@@ -101,11 +109,21 @@ class $ConversationTableTable extends ConversationTable
     } else if (isInserting) {
       context.missing(_participantDisplayNameMeta);
     }
-    if (data.containsKey('sender')) {
-      context.handle(_senderMeta,
-          sender.isAcceptableOrUnknown(data['sender']!, _senderMeta));
+    if (data.containsKey('sender_username')) {
+      context.handle(
+          _senderUsernameMeta,
+          senderUsername.isAcceptableOrUnknown(
+              data['sender_username']!, _senderUsernameMeta));
     } else if (isInserting) {
-      context.missing(_senderMeta);
+      context.missing(_senderUsernameMeta);
+    }
+    if (data.containsKey('sender_display_name')) {
+      context.handle(
+          _senderDisplayNameMeta,
+          senderDisplayName.isAcceptableOrUnknown(
+              data['sender_display_name']!, _senderDisplayNameMeta));
+    } else if (isInserting) {
+      context.missing(_senderDisplayNameMeta);
     }
     if (data.containsKey('message')) {
       context.handle(_messageMeta,
@@ -137,8 +155,10 @@ class $ConversationTableTable extends ConversationTable
       participantDisplayName: attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}participant_display_name'])!,
-      sender: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sender'])!,
+      senderUsername: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}sender_username'])!,
+      senderDisplayName: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}sender_display_name'])!,
       message: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}message'])!,
       createdAt: attachedDatabase.typeMapping
@@ -158,7 +178,8 @@ class ConversationTableData extends DataClass
   final String conversationId;
   final String participantUsername;
   final String participantDisplayName;
-  final String sender;
+  final String senderUsername;
+  final String senderDisplayName;
   final String message;
   final DateTime createdAt;
   const ConversationTableData(
@@ -166,7 +187,8 @@ class ConversationTableData extends DataClass
       required this.conversationId,
       required this.participantUsername,
       required this.participantDisplayName,
-      required this.sender,
+      required this.senderUsername,
+      required this.senderDisplayName,
       required this.message,
       required this.createdAt});
   @override
@@ -176,7 +198,8 @@ class ConversationTableData extends DataClass
     map['conversation_id'] = Variable<String>(conversationId);
     map['participant_username'] = Variable<String>(participantUsername);
     map['participant_display_name'] = Variable<String>(participantDisplayName);
-    map['sender'] = Variable<String>(sender);
+    map['sender_username'] = Variable<String>(senderUsername);
+    map['sender_display_name'] = Variable<String>(senderDisplayName);
     map['message'] = Variable<String>(message);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -188,7 +211,8 @@ class ConversationTableData extends DataClass
       conversationId: Value(conversationId),
       participantUsername: Value(participantUsername),
       participantDisplayName: Value(participantDisplayName),
-      sender: Value(sender),
+      senderUsername: Value(senderUsername),
+      senderDisplayName: Value(senderDisplayName),
       message: Value(message),
       createdAt: Value(createdAt),
     );
@@ -204,7 +228,8 @@ class ConversationTableData extends DataClass
           serializer.fromJson<String>(json['participantUsername']),
       participantDisplayName:
           serializer.fromJson<String>(json['participantDisplayName']),
-      sender: serializer.fromJson<String>(json['sender']),
+      senderUsername: serializer.fromJson<String>(json['senderUsername']),
+      senderDisplayName: serializer.fromJson<String>(json['senderDisplayName']),
       message: serializer.fromJson<String>(json['message']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -218,7 +243,8 @@ class ConversationTableData extends DataClass
       'participantUsername': serializer.toJson<String>(participantUsername),
       'participantDisplayName':
           serializer.toJson<String>(participantDisplayName),
-      'sender': serializer.toJson<String>(sender),
+      'senderUsername': serializer.toJson<String>(senderUsername),
+      'senderDisplayName': serializer.toJson<String>(senderDisplayName),
       'message': serializer.toJson<String>(message),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -229,7 +255,8 @@ class ConversationTableData extends DataClass
           String? conversationId,
           String? participantUsername,
           String? participantDisplayName,
-          String? sender,
+          String? senderUsername,
+          String? senderDisplayName,
           String? message,
           DateTime? createdAt}) =>
       ConversationTableData(
@@ -238,7 +265,8 @@ class ConversationTableData extends DataClass
         participantUsername: participantUsername ?? this.participantUsername,
         participantDisplayName:
             participantDisplayName ?? this.participantDisplayName,
-        sender: sender ?? this.sender,
+        senderUsername: senderUsername ?? this.senderUsername,
+        senderDisplayName: senderDisplayName ?? this.senderDisplayName,
         message: message ?? this.message,
         createdAt: createdAt ?? this.createdAt,
       );
@@ -254,7 +282,12 @@ class ConversationTableData extends DataClass
       participantDisplayName: data.participantDisplayName.present
           ? data.participantDisplayName.value
           : this.participantDisplayName,
-      sender: data.sender.present ? data.sender.value : this.sender,
+      senderUsername: data.senderUsername.present
+          ? data.senderUsername.value
+          : this.senderUsername,
+      senderDisplayName: data.senderDisplayName.present
+          ? data.senderDisplayName.value
+          : this.senderDisplayName,
       message: data.message.present ? data.message.value : this.message,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -267,7 +300,8 @@ class ConversationTableData extends DataClass
           ..write('conversationId: $conversationId, ')
           ..write('participantUsername: $participantUsername, ')
           ..write('participantDisplayName: $participantDisplayName, ')
-          ..write('sender: $sender, ')
+          ..write('senderUsername: $senderUsername, ')
+          ..write('senderDisplayName: $senderDisplayName, ')
           ..write('message: $message, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -275,8 +309,15 @@ class ConversationTableData extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, conversationId, participantUsername,
-      participantDisplayName, sender, message, createdAt);
+  int get hashCode => Object.hash(
+      id,
+      conversationId,
+      participantUsername,
+      participantDisplayName,
+      senderUsername,
+      senderDisplayName,
+      message,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -285,7 +326,8 @@ class ConversationTableData extends DataClass
           other.conversationId == this.conversationId &&
           other.participantUsername == this.participantUsername &&
           other.participantDisplayName == this.participantDisplayName &&
-          other.sender == this.sender &&
+          other.senderUsername == this.senderUsername &&
+          other.senderDisplayName == this.senderDisplayName &&
           other.message == this.message &&
           other.createdAt == this.createdAt);
 }
@@ -296,7 +338,8 @@ class ConversationTableCompanion
   final Value<String> conversationId;
   final Value<String> participantUsername;
   final Value<String> participantDisplayName;
-  final Value<String> sender;
+  final Value<String> senderUsername;
+  final Value<String> senderDisplayName;
   final Value<String> message;
   final Value<DateTime> createdAt;
   const ConversationTableCompanion({
@@ -304,7 +347,8 @@ class ConversationTableCompanion
     this.conversationId = const Value.absent(),
     this.participantUsername = const Value.absent(),
     this.participantDisplayName = const Value.absent(),
-    this.sender = const Value.absent(),
+    this.senderUsername = const Value.absent(),
+    this.senderDisplayName = const Value.absent(),
     this.message = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
@@ -313,13 +357,15 @@ class ConversationTableCompanion
     required String conversationId,
     required String participantUsername,
     required String participantDisplayName,
-    required String sender,
+    required String senderUsername,
+    required String senderDisplayName,
     required String message,
     required DateTime createdAt,
   })  : conversationId = Value(conversationId),
         participantUsername = Value(participantUsername),
         participantDisplayName = Value(participantDisplayName),
-        sender = Value(sender),
+        senderUsername = Value(senderUsername),
+        senderDisplayName = Value(senderDisplayName),
         message = Value(message),
         createdAt = Value(createdAt);
   static Insertable<ConversationTableData> custom({
@@ -327,7 +373,8 @@ class ConversationTableCompanion
     Expression<String>? conversationId,
     Expression<String>? participantUsername,
     Expression<String>? participantDisplayName,
-    Expression<String>? sender,
+    Expression<String>? senderUsername,
+    Expression<String>? senderDisplayName,
     Expression<String>? message,
     Expression<DateTime>? createdAt,
   }) {
@@ -338,7 +385,8 @@ class ConversationTableCompanion
         'participant_username': participantUsername,
       if (participantDisplayName != null)
         'participant_display_name': participantDisplayName,
-      if (sender != null) 'sender': sender,
+      if (senderUsername != null) 'sender_username': senderUsername,
+      if (senderDisplayName != null) 'sender_display_name': senderDisplayName,
       if (message != null) 'message': message,
       if (createdAt != null) 'created_at': createdAt,
     });
@@ -349,7 +397,8 @@ class ConversationTableCompanion
       Value<String>? conversationId,
       Value<String>? participantUsername,
       Value<String>? participantDisplayName,
-      Value<String>? sender,
+      Value<String>? senderUsername,
+      Value<String>? senderDisplayName,
       Value<String>? message,
       Value<DateTime>? createdAt}) {
     return ConversationTableCompanion(
@@ -358,7 +407,8 @@ class ConversationTableCompanion
       participantUsername: participantUsername ?? this.participantUsername,
       participantDisplayName:
           participantDisplayName ?? this.participantDisplayName,
-      sender: sender ?? this.sender,
+      senderUsername: senderUsername ?? this.senderUsername,
+      senderDisplayName: senderDisplayName ?? this.senderDisplayName,
       message: message ?? this.message,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -380,8 +430,11 @@ class ConversationTableCompanion
       map['participant_display_name'] =
           Variable<String>(participantDisplayName.value);
     }
-    if (sender.present) {
-      map['sender'] = Variable<String>(sender.value);
+    if (senderUsername.present) {
+      map['sender_username'] = Variable<String>(senderUsername.value);
+    }
+    if (senderDisplayName.present) {
+      map['sender_display_name'] = Variable<String>(senderDisplayName.value);
     }
     if (message.present) {
       map['message'] = Variable<String>(message.value);
@@ -399,7 +452,8 @@ class ConversationTableCompanion
           ..write('conversationId: $conversationId, ')
           ..write('participantUsername: $participantUsername, ')
           ..write('participantDisplayName: $participantDisplayName, ')
-          ..write('sender: $sender, ')
+          ..write('senderUsername: $senderUsername, ')
+          ..write('senderDisplayName: $senderDisplayName, ')
           ..write('message: $message, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -425,7 +479,8 @@ typedef $$ConversationTableTableCreateCompanionBuilder
   required String conversationId,
   required String participantUsername,
   required String participantDisplayName,
-  required String sender,
+  required String senderUsername,
+  required String senderDisplayName,
   required String message,
   required DateTime createdAt,
 });
@@ -435,7 +490,8 @@ typedef $$ConversationTableTableUpdateCompanionBuilder
   Value<String> conversationId,
   Value<String> participantUsername,
   Value<String> participantDisplayName,
-  Value<String> sender,
+  Value<String> senderUsername,
+  Value<String> senderDisplayName,
   Value<String> message,
   Value<DateTime> createdAt,
 });
@@ -464,8 +520,13 @@ class $$ConversationTableTableFilterComposer
       column: $table.participantDisplayName,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get sender => $composableBuilder(
-      column: $table.sender, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get senderUsername => $composableBuilder(
+      column: $table.senderUsername,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get senderDisplayName => $composableBuilder(
+      column: $table.senderDisplayName,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get message => $composableBuilder(
       column: $table.message, builder: (column) => ColumnFilters(column));
@@ -498,8 +559,13 @@ class $$ConversationTableTableOrderingComposer
       column: $table.participantDisplayName,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get sender => $composableBuilder(
-      column: $table.sender, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get senderUsername => $composableBuilder(
+      column: $table.senderUsername,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get senderDisplayName => $composableBuilder(
+      column: $table.senderDisplayName,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get message => $composableBuilder(
       column: $table.message, builder: (column) => ColumnOrderings(column));
@@ -529,8 +595,11 @@ class $$ConversationTableTableAnnotationComposer
   GeneratedColumn<String> get participantDisplayName => $composableBuilder(
       column: $table.participantDisplayName, builder: (column) => column);
 
-  GeneratedColumn<String> get sender =>
-      $composableBuilder(column: $table.sender, builder: (column) => column);
+  GeneratedColumn<String> get senderUsername => $composableBuilder(
+      column: $table.senderUsername, builder: (column) => column);
+
+  GeneratedColumn<String> get senderDisplayName => $composableBuilder(
+      column: $table.senderDisplayName, builder: (column) => column);
 
   GeneratedColumn<String> get message =>
       $composableBuilder(column: $table.message, builder: (column) => column);
@@ -572,7 +641,8 @@ class $$ConversationTableTableTableManager extends RootTableManager<
             Value<String> conversationId = const Value.absent(),
             Value<String> participantUsername = const Value.absent(),
             Value<String> participantDisplayName = const Value.absent(),
-            Value<String> sender = const Value.absent(),
+            Value<String> senderUsername = const Value.absent(),
+            Value<String> senderDisplayName = const Value.absent(),
             Value<String> message = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
@@ -581,7 +651,8 @@ class $$ConversationTableTableTableManager extends RootTableManager<
             conversationId: conversationId,
             participantUsername: participantUsername,
             participantDisplayName: participantDisplayName,
-            sender: sender,
+            senderUsername: senderUsername,
+            senderDisplayName: senderDisplayName,
             message: message,
             createdAt: createdAt,
           ),
@@ -590,7 +661,8 @@ class $$ConversationTableTableTableManager extends RootTableManager<
             required String conversationId,
             required String participantUsername,
             required String participantDisplayName,
-            required String sender,
+            required String senderUsername,
+            required String senderDisplayName,
             required String message,
             required DateTime createdAt,
           }) =>
@@ -599,7 +671,8 @@ class $$ConversationTableTableTableManager extends RootTableManager<
             conversationId: conversationId,
             participantUsername: participantUsername,
             participantDisplayName: participantDisplayName,
-            sender: sender,
+            senderUsername: senderUsername,
+            senderDisplayName: senderDisplayName,
             message: message,
             createdAt: createdAt,
           ),
