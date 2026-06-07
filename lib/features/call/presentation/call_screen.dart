@@ -7,6 +7,7 @@ import 'package:photomanager/features/call/presentation/call_providers.dart';
 import 'package:photomanager/features/call/presentation/widgets/call_control_button.dart';
 import 'package:photomanager/features/call/presentation/widgets/conversation_message_list.dart';
 import 'package:photomanager/features/call/presentation/widgets/video_placeholder.dart';
+import 'package:photomanager/features/conversation/presentation/conversation_providers.dart';
 import 'package:photomanager/shared/widgets/app_loading_indicator.dart';
 
 class CallScreen extends ConsumerWidget {
@@ -45,6 +46,17 @@ class CallScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final callState = ref.watch(callStateProvider(username));
     final participant = callState.valueOrNull?.participant;
+
+    if (participant != null) {
+      ref.watch(
+        seedCallConversationProvider(
+          ConversationSeedRequest(
+            participantUsername: participant.username,
+            participantDisplayName: participant.displayName,
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(

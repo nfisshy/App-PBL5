@@ -39,9 +39,10 @@ class HomeScreen extends ConsumerWidget {
                   onPressed: () => context.push(AppRoutes.contacts),
                 ),
                 const SizedBox(height: 12),
-                const _FeatureButton(
+                _FeatureButton(
                   icon: Icons.history_outlined,
                   label: 'Conversation History',
+                  onPressed: () => context.push(AppRoutes.conversation),
                 ),
                 const SizedBox(height: 12),
                 const _FeatureButton(

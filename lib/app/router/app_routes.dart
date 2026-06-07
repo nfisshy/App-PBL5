@@ -8,10 +8,13 @@ abstract final class AppRoutes {
   static const contactDetails = '/contacts/:username';
   static const call = '/call/:username';
   static const conversation = '/conversation';
+  static const conversationDetails = '/conversation/:conversationId';
   static const profile = '/profile';
   static const speech = '/speech';
   static const video = '/video';
 
   static String contactDetail(String username) => '/contacts/$username';
   static String callRoute(String username) => '/call/$username';
+  static String conversationDetail(String conversationId) =>
+      '/conversation/$conversationId';
 }

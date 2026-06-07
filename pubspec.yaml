@@ -34,6 +34,8 @@ dependencies:
   go_router: ^14.6.2
   dio: ^5.7.0
   drift: ^2.22.1
+  path: ^1.9.0
+  sqlite3_flutter_libs: ^0.5.28
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
   flutter_bloc: ^9.0.0

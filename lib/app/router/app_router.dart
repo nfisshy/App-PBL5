@@ -7,6 +7,8 @@ import 'package:photomanager/features/auth/presentation/login_screen.dart';
 import 'package:photomanager/features/call/presentation/call_screen.dart';
 import 'package:photomanager/features/contacts/presentation/contact_detail_screen.dart';
 import 'package:photomanager/features/contacts/presentation/contacts_screen.dart';
+import 'package:photomanager/features/conversation/presentation/conversation_history_detail_screen.dart';
+import 'package:photomanager/features/conversation/presentation/history_screen.dart';
 import 'package:photomanager/features/splash/presentation/splash_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -17,7 +19,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       final requiresAuthentication = state.matchedLocation == AppRoutes.home ||
           state.matchedLocation.startsWith(AppRoutes.contacts) ||
-          state.matchedLocation.startsWith('/call');
+          state.matchedLocation.startsWith('/call') ||
+          state.matchedLocation.startsWith(AppRoutes.conversation);
 
       if (requiresAuthentication && !isAuthenticated) {
         return AppRoutes.login;
@@ -56,6 +59,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.call,
         builder: (context, state) => CallScreen(
           username: state.pathParameters['username']!,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.conversation,
+        builder: (context, state) => const HistoryScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.conversationDetails,
+        builder: (context, state) => ConversationHistoryDetailScreen(
+          conversationId: state.pathParameters['conversationId']!,
         ),
       ),
       // Register future feature routes here when their screens are implemented.
