@@ -5,6 +5,7 @@ import 'package:photomanager/features/auth/presentation/auth_controller.dart';
 import 'package:photomanager/features/auth/presentation/home_screen.dart';
 import 'package:photomanager/features/auth/presentation/login_screen.dart';
 import 'package:photomanager/features/call/presentation/call_screen.dart';
+import 'package:photomanager/features/call/presentation/incoming_call_screen.dart';
 import 'package:photomanager/features/contacts/presentation/contact_detail_screen.dart';
 import 'package:photomanager/features/contacts/presentation/contacts_screen.dart';
 import 'package:photomanager/features/conversation/presentation/conversation_history_detail_screen.dart';
@@ -20,6 +21,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final requiresAuthentication = state.matchedLocation == AppRoutes.home ||
           state.matchedLocation.startsWith(AppRoutes.contacts) ||
           state.matchedLocation.startsWith('/call') ||
+          state.matchedLocation == AppRoutes.incomingCall ||
           state.matchedLocation.startsWith(AppRoutes.conversation);
 
       if (requiresAuthentication && !isAuthenticated) {
@@ -60,6 +62,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => CallScreen(
           username: state.pathParameters['username']!,
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.incomingCall,
+        builder: (context, state) => const IncomingCallScreen(),
       ),
       GoRoute(
         path: AppRoutes.conversation,

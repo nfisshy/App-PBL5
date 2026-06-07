@@ -21,6 +21,10 @@ class MockCallRepository implements CallRepository {
       username: 'minh',
       displayName: 'Pham Duc Minh',
     ),
+    'dat001': CallParticipant(
+      username: 'dat001',
+      displayName: 'DAT',
+    ),
   };
 
   static const _messages = [

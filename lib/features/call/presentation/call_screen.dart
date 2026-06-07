@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photomanager/features/call/domain/call_participant.dart';
 import 'package:photomanager/features/call/domain/call_state.dart';
+import 'package:photomanager/features/call/domain/signaling/call_status.dart';
 import 'package:photomanager/features/call/presentation/call_providers.dart';
+import 'package:photomanager/features/call/presentation/signaling/call_signaling_providers.dart';
 import 'package:photomanager/features/call/presentation/widgets/call_control_button.dart';
+import 'package:photomanager/features/call/presentation/widgets/call_status_banner.dart';
 import 'package:photomanager/features/call/presentation/widgets/conversation_message_list.dart';
 import 'package:photomanager/features/call/presentation/widgets/video_placeholder.dart';
 import 'package:photomanager/features/conversation/presentation/conversation_providers.dart';
@@ -13,7 +16,7 @@ import 'package:photomanager/features/realtime/presentation/realtime_providers.d
 import 'package:photomanager/features/realtime/presentation/widgets/connection_status_badge.dart';
 import 'package:photomanager/shared/widgets/app_loading_indicator.dart';
 
-class CallScreen extends ConsumerWidget {
+class CallScreen extends ConsumerStatefulWidget {
   const CallScreen({
     required this.username,
     super.key,
@@ -21,7 +24,14 @@ class CallScreen extends ConsumerWidget {
 
   final String username;
 
-  Future<void> _confirmEndCall(BuildContext context) async {
+  @override
+  ConsumerState<CallScreen> createState() => _CallScreenState();
+}
+
+class _CallScreenState extends ConsumerState<CallScreen> {
+  bool _signalingStarted = false;
+
+  Future<void> _confirmEndCall() async {
     final shouldEndCall = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -40,19 +50,25 @@ class CallScreen extends ConsumerWidget {
       ),
     );
 
-    if (shouldEndCall == true && context.mounted) {
-      context.pop();
+    if (shouldEndCall == true && mounted) {
+      await ref.read(currentCallSessionProvider.notifier).endCall();
+      if (mounted) {
+        context.pop();
+      }
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final callState = ref.watch(callStateProvider(username));
+  Widget build(BuildContext context) {
+    final callState = ref.watch(callStateProvider(widget.username));
     final participant = callState.valueOrNull?.participant;
+    final signalingStatus =
+        ref.watch(callStatusProvider).valueOrNull ?? CallStatus.idle;
     final realtimeStatus = ref.watch(connectionStatusProvider).valueOrNull ??
         ConnectionStatus.disconnected;
 
     if (participant != null) {
+      _startSignaling(participant);
       ref.watch(
         seedCallConversationProvider(
           ConversationSeedRequest(
@@ -78,31 +94,51 @@ class CallScreen extends ConsumerWidget {
           loading: () => const Center(child: AppLoadingIndicator()),
           error: (error, stackTrace) => _CallError(
             onRetry: () =>
-                ref.read(callStateProvider(username).notifier).load(),
+                ref.read(callStateProvider(widget.username).notifier).load(),
           ),
           data: (state) => state == null
               ? const Center(child: Text('Participant not found.'))
               : _CallContent(
                   state: state,
+                  signalingStatus: signalingStatus,
                   onToggleMic: () {
-                    ref.read(callStateProvider(username).notifier).toggleMic();
+                    ref
+                        .read(callStateProvider(widget.username).notifier)
+                        .toggleMic();
                   },
-                  onEndCall: () => _confirmEndCall(context),
+                  onEndCall: _confirmEndCall,
                 ),
         ),
       ),
     );
+  }
+
+  void _startSignaling(CallParticipant participant) {
+    if (_signalingStarted) {
+      return;
+    }
+
+    _signalingStarted = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref
+            .read(currentCallSessionProvider.notifier)
+            .startOutgoingCall(participant);
+      }
+    });
   }
 }
 
 class _CallContent extends StatelessWidget {
   const _CallContent({
     required this.state,
+    required this.signalingStatus,
     required this.onToggleMic,
     required this.onEndCall,
   });
 
   final CallState state;
+  final CallStatus signalingStatus;
   final VoidCallback onToggleMic;
   final VoidCallback onEndCall;
 
@@ -117,6 +153,8 @@ class _CallContent extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  CallStatusBanner(status: signalingStatus),
+                  const SizedBox(height: 16),
                   const VideoPlaceholder(),
                   const SizedBox(height: 16),
                   _ParticipantCard(participant: state.participant),

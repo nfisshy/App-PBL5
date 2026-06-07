@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photomanager/app/router/app_routes.dart';
 import 'package:photomanager/features/auth/presentation/auth_controller.dart';
+import 'package:photomanager/features/call/domain/call_participant.dart';
+import 'package:photomanager/features/call/presentation/signaling/call_signaling_providers.dart';
 import 'package:photomanager/features/realtime/domain/connection_status.dart';
 import 'package:photomanager/features/realtime/presentation/realtime_providers.dart';
 import 'package:photomanager/features/realtime/presentation/widgets/connection_status_badge.dart';
@@ -39,6 +41,22 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
                 _RealtimeStatusCard(status: realtimeStatus),
+                const SizedBox(height: 12),
+                _DevelopmentCallCard(
+                  onSimulateIncoming: () async {
+                    await ref
+                        .read(currentCallSessionProvider.notifier)
+                        .simulateIncomingCall(_developmentCaller);
+                    if (context.mounted) {
+                      context.push(AppRoutes.incomingCall);
+                    }
+                  },
+                  onSimulateMissed: () async {
+                    await ref
+                        .read(currentCallSessionProvider.notifier)
+                        .simulateMissedCall(_developmentCaller);
+                  },
+                ),
                 const SizedBox(height: 32),
                 _FeatureButton(
                   icon: Icons.contacts_outlined,
@@ -59,6 +77,48 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+const _developmentCaller = CallParticipant(
+  username: 'dat001',
+  displayName: 'DAT',
+);
+
+class _DevelopmentCallCard extends StatelessWidget {
+  const _DevelopmentCallCard({
+    required this.onSimulateIncoming,
+    required this.onSimulateMissed,
+  });
+
+  final VoidCallback onSimulateIncoming;
+  final VoidCallback onSimulateMissed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Call Signaling Test',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: onSimulateIncoming,
+              child: const Text('Simulate Incoming Call'),
+            ),
+            OutlinedButton(
+              onPressed: onSimulateMissed,
+              child: const Text('Simulate Missed Call'),
+            ),
+          ],
         ),
       ),
     );

@@ -7,6 +7,7 @@ abstract final class AppRoutes {
   static const contacts = '/contacts';
   static const contactDetails = '/contacts/:username';
   static const call = '/call/:username';
+  static const incomingCall = '/incoming-call';
   static const conversation = '/conversation';
   static const conversationDetails = '/conversation/:conversationId';
   static const profile = '/profile';
