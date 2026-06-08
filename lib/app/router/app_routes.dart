@@ -2,6 +2,7 @@ abstract final class AppRoutes {
   static const splash = '/';
   static const login = '/login';
   static const home = '/home';
+  static const apiDiagnostics = '/api-diagnostics';
 
   // Reserved route paths for future feature implementations.
   static const contacts = '/contacts';

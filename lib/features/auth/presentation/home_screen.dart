@@ -112,6 +112,12 @@ class HomeScreen extends ConsumerWidget {
                   label: 'Profile',
                 ),
                 const SizedBox(height: 12),
+                _FeatureButton(
+                  icon: Icons.api_outlined,
+                  label: 'API Diagnostics',
+                  onPressed: () => context.push(AppRoutes.apiDiagnostics),
+                ),
+                const SizedBox(height: 12),
                 _MediaDiagnosticsCard(
                   cameraState: cameraState,
                   microphoneState: microphoneState,
