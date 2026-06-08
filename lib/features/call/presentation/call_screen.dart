@@ -3,6 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:photomanager/features/audio/domain/audio_capture_session.dart';
+import 'package:photomanager/features/audio/domain/audio_capture_state.dart';
+import 'package:photomanager/features/audio/domain/audio_chunk.dart';
+import 'package:photomanager/features/audio/domain/audio_statistics.dart';
+import 'package:photomanager/features/audio/presentation/audio_providers.dart';
+import 'package:photomanager/features/audio/presentation/widgets/audio_chunk_list.dart';
+import 'package:photomanager/features/audio/presentation/widgets/audio_statistics_card.dart';
+import 'package:photomanager/features/audio/presentation/widgets/audio_status_badge.dart';
+import 'package:photomanager/features/audio/presentation/widgets/recording_control_panel.dart';
 import 'package:photomanager/features/call/domain/call_participant.dart';
 import 'package:photomanager/features/call/domain/call_state.dart';
 import 'package:photomanager/features/call/domain/signaling/call_status.dart';
@@ -54,6 +63,9 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   @override
   void dispose() {
     unawaited(ref.read(mediaActionsProvider).dispose());
+    unawaited(
+      ref.read(currentAudioSessionProvider.notifier).disposeCapture(),
+    );
     super.dispose();
   }
 
@@ -100,6 +112,13 @@ class _CallScreenState extends ConsumerState<CallScreen> {
         const VideoStreamState.idle();
     final audioState = ref.watch(audioStreamStateProvider).valueOrNull ??
         const AudioStreamState.idle();
+    final audioCaptureState =
+        ref.watch(audioCaptureStateProvider).valueOrNull ??
+            AudioCaptureState.idle;
+    final audioStatistics = ref.watch(audioStatisticsProvider).valueOrNull ??
+        const AudioStatistics.empty();
+    final audioSession = ref.watch(currentAudioSessionProvider);
+    final audioChunks = ref.watch(recentAudioChunksProvider);
 
     if (participant != null) {
       _startSignaling(participant);
@@ -140,6 +159,12 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                   videoState: videoState,
                   audioState: audioState,
                   mediaActions: ref.read(mediaActionsProvider),
+                  audioCaptureState: audioCaptureState,
+                  audioStatistics: audioStatistics,
+                  audioSession: audioSession,
+                  audioChunks: audioChunks,
+                  audioController:
+                      ref.read(currentAudioSessionProvider.notifier),
                   onToggleMic: () {
                     ref
                         .read(callStateProvider(widget.username).notifier)
@@ -177,6 +202,11 @@ class _CallContent extends StatelessWidget {
     required this.videoState,
     required this.audioState,
     required this.mediaActions,
+    required this.audioCaptureState,
+    required this.audioStatistics,
+    required this.audioSession,
+    required this.audioChunks,
+    required this.audioController,
     required this.onToggleMic,
     required this.onEndCall,
   });
@@ -188,6 +218,11 @@ class _CallContent extends StatelessWidget {
   final VideoStreamState videoState;
   final AudioStreamState audioState;
   final MediaActions mediaActions;
+  final AudioCaptureState audioCaptureState;
+  final AudioStatistics audioStatistics;
+  final AudioCaptureSession? audioSession;
+  final List<AudioChunk> audioChunks;
+  final AudioCaptureSessionController audioController;
   final VoidCallback onToggleMic;
   final VoidCallback onEndCall;
 
@@ -244,6 +279,14 @@ class _CallContent extends StatelessWidget {
                     actions: mediaActions,
                   ),
                   const SizedBox(height: 16),
+                  _AudioCaptureSection(
+                    state: audioCaptureState,
+                    statistics: audioStatistics,
+                    session: audioSession,
+                    chunks: audioChunks,
+                    controller: audioController,
+                  ),
+                  const SizedBox(height: 16),
                   _ParticipantCard(participant: state.participant),
                   const SizedBox(height: 24),
                   Text(
@@ -278,6 +321,74 @@ class _CallContent extends StatelessWidget {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AudioCaptureSection extends StatelessWidget {
+  const _AudioCaptureSection({
+    required this.state,
+    required this.statistics,
+    required this.session,
+    required this.chunks,
+    required this.controller,
+  });
+
+  final AudioCaptureState state;
+  final AudioStatistics statistics;
+  final AudioCaptureSession? session;
+  final List<AudioChunk> chunks;
+  final AudioCaptureSessionController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final currentSession = session;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Audio Capture',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const Spacer(),
+                AudioStatusBadge(state: state),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              currentSession == null
+                  ? 'No active audio session'
+                  : 'Session: ${currentSession.sessionId}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 12),
+            AudioStatisticsCard(statistics: statistics),
+            const SizedBox(height: 12),
+            RecordingControlPanel(
+              state: state,
+              onInitialize: controller.initialize,
+              onStart: controller.startRecording,
+              onPause: controller.pauseRecording,
+              onResume: controller.resumeRecording,
+              onStop: controller.stopRecording,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Latest Audio Chunks',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            AudioChunkList(chunks: chunks),
           ],
         ),
       ),

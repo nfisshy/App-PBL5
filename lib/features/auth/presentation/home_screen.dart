@@ -3,6 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photomanager/app/router/app_routes.dart';
 import 'package:photomanager/features/auth/presentation/auth_controller.dart';
+import 'package:photomanager/features/audio/domain/audio_capture_session.dart';
+import 'package:photomanager/features/audio/domain/audio_capture_state.dart';
+import 'package:photomanager/features/audio/domain/audio_statistics.dart';
+import 'package:photomanager/features/audio/presentation/audio_providers.dart';
+import 'package:photomanager/features/audio/presentation/widgets/audio_status_badge.dart';
 import 'package:photomanager/features/call/domain/call_participant.dart';
 import 'package:photomanager/features/call/presentation/signaling/call_signaling_providers.dart';
 import 'package:photomanager/features/media/domain/audio_stream_state.dart';
@@ -31,6 +36,11 @@ class HomeScreen extends ConsumerWidget {
         const VideoStreamState.idle();
     final audioState = ref.watch(audioStreamStateProvider).valueOrNull ??
         const AudioStreamState.idle();
+    final captureState = ref.watch(audioCaptureStateProvider).valueOrNull ??
+        AudioCaptureState.idle;
+    final captureStatistics = ref.watch(audioStatisticsProvider).valueOrNull ??
+        const AudioStatistics.empty();
+    final captureSession = ref.watch(currentAudioSessionProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
@@ -95,9 +105,63 @@ class HomeScreen extends ConsumerWidget {
                   videoState: videoState,
                   audioState: audioState,
                 ),
+                const SizedBox(height: 12),
+                _AudioDiagnosticsCard(
+                  state: captureState,
+                  statistics: captureStatistics,
+                  session: captureSession,
+                ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AudioDiagnosticsCard extends StatelessWidget {
+  const _AudioDiagnosticsCard({
+    required this.state,
+    required this.statistics,
+    required this.session,
+  });
+
+  final AudioCaptureState state;
+  final AudioStatistics statistics;
+  final AudioCaptureSession? session;
+
+  @override
+  Widget build(BuildContext context) {
+    final currentSession = session;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Audio Diagnostics',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const Spacer(),
+                AudioStatusBadge(state: state),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              currentSession == null
+                  ? 'Current Session: None'
+                  : 'Current Session: ${currentSession.sessionId}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text('Generated Chunks: ${statistics.chunkCount}'),
+            Text('Recording Duration: ${statistics.totalDurationMs} ms'),
+          ],
         ),
       ),
     );
