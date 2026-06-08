@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:photomanager/features/conversation/domain/conversation_message.dart';
 import 'package:photomanager/features/conversation/presentation/conversation_providers.dart';
 import 'package:photomanager/features/conversation/presentation/widgets/history_message_bubble.dart';
+import 'package:photomanager/features/speech_output/presentation/speech_output_providers.dart';
 import 'package:photomanager/shared/widgets/app_loading_indicator.dart';
 
 class ConversationHistoryDetailScreen extends ConsumerWidget {
@@ -33,7 +34,14 @@ class ConversationHistoryDetailScreen extends ConsumerWidget {
           ),
           data: (items) => items.isEmpty
               ? const Center(child: Text('No stored messages.'))
-              : _MessageList(messages: items),
+              : _MessageList(
+                  messages: items,
+                  onSpeak: (message) {
+                    ref
+                        .read(speechOutputServiceProvider)
+                        .speakFinal(message.message);
+                  },
+                ),
         ),
       ),
     );
@@ -41,9 +49,13 @@ class ConversationHistoryDetailScreen extends ConsumerWidget {
 }
 
 class _MessageList extends StatelessWidget {
-  const _MessageList({required this.messages});
+  const _MessageList({
+    required this.messages,
+    required this.onSpeak,
+  });
 
   final List<ConversationMessage> messages;
+  final ValueChanged<ConversationMessage> onSpeak;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +67,18 @@ class _MessageList extends StatelessWidget {
           itemCount: messages.length,
           separatorBuilder: (context, index) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
-            return HistoryMessageBubble(message: messages[index]);
+            final message = messages[index];
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: HistoryMessageBubble(message: message)),
+                IconButton(
+                  tooltip: 'Speak message',
+                  onPressed: () => onSpeak(message),
+                  icon: const Icon(Icons.volume_up_outlined),
+                ),
+              ],
+            );
           },
         ),
       ),

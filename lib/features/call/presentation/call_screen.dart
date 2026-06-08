@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:photomanager/core/services/speech/speech_output_service.dart';
 import 'package:photomanager/features/audio/domain/audio_capture_session.dart';
 import 'package:photomanager/features/audio/domain/audio_capture_state.dart';
 import 'package:photomanager/features/audio/domain/audio_chunk.dart';
@@ -33,6 +34,15 @@ import 'package:photomanager/features/media/presentation/widgets/stream_statisti
 import 'package:photomanager/features/realtime/domain/connection_status.dart';
 import 'package:photomanager/features/realtime/presentation/realtime_providers.dart';
 import 'package:photomanager/features/realtime/presentation/widgets/connection_status_badge.dart';
+import 'package:photomanager/features/speech_output/domain/speech_message.dart';
+import 'package:photomanager/features/speech_output/domain/speech_queue_item.dart';
+import 'package:photomanager/features/speech_output/domain/speech_state.dart';
+import 'package:photomanager/features/speech_output/domain/speech_statistics.dart';
+import 'package:photomanager/features/speech_output/presentation/speech_output_providers.dart';
+import 'package:photomanager/features/speech_output/presentation/widgets/speech_control_panel.dart';
+import 'package:photomanager/features/speech_output/presentation/widgets/speech_message_card.dart';
+import 'package:photomanager/features/speech_output/presentation/widgets/speech_queue_card.dart';
+import 'package:photomanager/features/speech_output/presentation/widgets/speech_status_badge.dart';
 import 'package:photomanager/shared/widgets/app_loading_indicator.dart';
 
 class CallScreen extends ConsumerStatefulWidget {
@@ -119,6 +129,13 @@ class _CallScreenState extends ConsumerState<CallScreen> {
         const AudioStatistics.empty();
     final audioSession = ref.watch(currentAudioSessionProvider);
     final audioChunks = ref.watch(recentAudioChunksProvider);
+    final speechState =
+        ref.watch(speechStateProvider).valueOrNull ?? SpeechState.idle;
+    final speechStatistics = ref.watch(speechStatisticsProvider).valueOrNull ??
+        const SpeechStatistics.empty();
+    final spokenMessage = ref.watch(speechMessageProvider).valueOrNull;
+    final speechQueue =
+        ref.watch(speechQueueProvider).valueOrNull ?? const <SpeechQueueItem>[];
 
     if (participant != null) {
       _startSignaling(participant);
@@ -165,6 +182,11 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                   audioChunks: audioChunks,
                   audioController:
                       ref.read(currentAudioSessionProvider.notifier),
+                  speechState: speechState,
+                  speechStatistics: speechStatistics,
+                  spokenMessage: spokenMessage,
+                  speechQueue: speechQueue,
+                  speechActions: ref.read(speechOutputServiceProvider),
                   onToggleMic: () {
                     ref
                         .read(callStateProvider(widget.username).notifier)
@@ -207,6 +229,11 @@ class _CallContent extends StatelessWidget {
     required this.audioSession,
     required this.audioChunks,
     required this.audioController,
+    required this.speechState,
+    required this.speechStatistics,
+    required this.spokenMessage,
+    required this.speechQueue,
+    required this.speechActions,
     required this.onToggleMic,
     required this.onEndCall,
   });
@@ -223,6 +250,11 @@ class _CallContent extends StatelessWidget {
   final AudioCaptureSession? audioSession;
   final List<AudioChunk> audioChunks;
   final AudioCaptureSessionController audioController;
+  final SpeechState speechState;
+  final SpeechStatistics speechStatistics;
+  final SpeechMessage? spokenMessage;
+  final List<SpeechQueueItem> speechQueue;
+  final SpeechOutputService speechActions;
   final VoidCallback onToggleMic;
   final VoidCallback onEndCall;
 
@@ -287,6 +319,14 @@ class _CallContent extends StatelessWidget {
                     controller: audioController,
                   ),
                   const SizedBox(height: 16),
+                  _SpeechOutputSection(
+                    state: speechState,
+                    statistics: speechStatistics,
+                    spokenMessage: spokenMessage,
+                    queue: speechQueue,
+                    actions: speechActions,
+                  ),
+                  const SizedBox(height: 16),
                   _ParticipantCard(participant: state.participant),
                   const SizedBox(height: 24),
                   Text(
@@ -320,6 +360,66 @@ class _CallContent extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SpeechOutputSection extends StatelessWidget {
+  const _SpeechOutputSection({
+    required this.state,
+    required this.statistics,
+    required this.spokenMessage,
+    required this.queue,
+    required this.actions,
+  });
+
+  final SpeechState state;
+  final SpeechStatistics statistics;
+  final SpeechMessage? spokenMessage;
+  final List<SpeechQueueItem> queue;
+  final SpeechOutputService actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Speech Output',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const Spacer(),
+                SpeechStatusBadge(state: state),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Queued Messages: ${statistics.queuedCount}'),
+            Text('Spoken Messages: ${statistics.spokenCount}'),
+            Text('Speaking: ${statistics.isSpeaking ? 'Yes' : 'No'}'),
+            const SizedBox(height: 8),
+            SpeechMessageCard(message: spokenMessage),
+            SpeechQueueCard(items: queue),
+            const SizedBox(height: 8),
+            SpeechControlPanel(
+              state: state,
+              onSpeakDraft: () => actions.speakDraft(
+                'Xin chao, day la ban nhap.',
+              ),
+              onSpeakFinal: () => actions.speakFinal(
+                'Xin chao, day la ket qua cuoi cung.',
+              ),
+              onPause: actions.pause,
+              onResume: actions.resume,
+              onStop: actions.stop,
             ),
           ],
         ),

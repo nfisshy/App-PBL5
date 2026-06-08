@@ -19,6 +19,12 @@ import 'package:photomanager/features/media/presentation/widgets/media_status_ba
 import 'package:photomanager/features/realtime/domain/connection_status.dart';
 import 'package:photomanager/features/realtime/presentation/realtime_providers.dart';
 import 'package:photomanager/features/realtime/presentation/widgets/connection_status_badge.dart';
+import 'package:photomanager/features/speech_output/domain/speech_message.dart';
+import 'package:photomanager/features/speech_output/domain/speech_queue_item.dart';
+import 'package:photomanager/features/speech_output/domain/speech_state.dart';
+import 'package:photomanager/features/speech_output/domain/speech_statistics.dart';
+import 'package:photomanager/features/speech_output/presentation/speech_output_providers.dart';
+import 'package:photomanager/features/speech_output/presentation/widgets/speech_status_badge.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -41,6 +47,13 @@ class HomeScreen extends ConsumerWidget {
     final captureStatistics = ref.watch(audioStatisticsProvider).valueOrNull ??
         const AudioStatistics.empty();
     final captureSession = ref.watch(currentAudioSessionProvider);
+    final speechState =
+        ref.watch(speechStateProvider).valueOrNull ?? SpeechState.idle;
+    final speechStatistics = ref.watch(speechStatisticsProvider).valueOrNull ??
+        const SpeechStatistics.empty();
+    final latestSpeechMessage = ref.watch(speechMessageProvider).valueOrNull;
+    final speechQueue =
+        ref.watch(speechQueueProvider).valueOrNull ?? const <SpeechQueueItem>[];
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
@@ -111,9 +124,64 @@ class HomeScreen extends ConsumerWidget {
                   statistics: captureStatistics,
                   session: captureSession,
                 ),
+                const SizedBox(height: 12),
+                _SpeechDiagnosticsCard(
+                  state: speechState,
+                  statistics: speechStatistics,
+                  queueSize: speechQueue.length,
+                  latestMessage: latestSpeechMessage,
+                ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SpeechDiagnosticsCard extends StatelessWidget {
+  const _SpeechDiagnosticsCard({
+    required this.state,
+    required this.statistics,
+    required this.queueSize,
+    required this.latestMessage,
+  });
+
+  final SpeechState state;
+  final SpeechStatistics statistics;
+  final int queueSize;
+  final SpeechMessage? latestMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Speech Diagnostics',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const Spacer(),
+                SpeechStatusBadge(state: state),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text('Queue Size: $queueSize'),
+            Text('Spoken Count: ${statistics.spokenCount}'),
+            Text(
+              latestMessage == null
+                  ? 'Latest Message: None'
+                  : 'Latest Message: ${latestMessage!.text}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
