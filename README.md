@@ -16,8 +16,13 @@ For help getting started with Flutter development, view the
 samples, guidance on mobile development, and a full API reference.
 
 
+## CHẠY CHƯƠNG TRÌNH
+nếu báo lỗi cứ GPT cách sửa 
 
+```
+flutter run
 
+```
 
 Test account:
 email : admin@test.com
