@@ -101,7 +101,8 @@ class MockApiClient implements ApiClient {
     Map<String, Object?>? fields,
     ResponseDecoder<T>? decoder,
   }) {
-    if (path != ApiConstants.speechToPoseEndpoint) {
+    if (path != ApiConstants.speechToPoseEndpoint &&
+        path != ApiConstants.speechToPoseRawEndpoint) {
       return _handle(
         method: 'UPLOAD',
         path: path,

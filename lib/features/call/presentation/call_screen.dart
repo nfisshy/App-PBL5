@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:photomanager/core/services/audio_upload/audio_upload_service.dart';
 import 'package:photomanager/core/services/speech/speech_output_service.dart';
 import 'package:photomanager/features/audio/domain/audio_capture_session.dart';
 import 'package:photomanager/features/audio/domain/audio_capture_state.dart';
@@ -13,6 +14,14 @@ import 'package:photomanager/features/audio/presentation/widgets/audio_chunk_lis
 import 'package:photomanager/features/audio/presentation/widgets/audio_statistics_card.dart';
 import 'package:photomanager/features/audio/presentation/widgets/audio_status_badge.dart';
 import 'package:photomanager/features/audio/presentation/widgets/recording_control_panel.dart';
+import 'package:photomanager/features/audio_upload/domain/audio_upload_response.dart';
+import 'package:photomanager/features/audio_upload/domain/audio_upload_state.dart';
+import 'package:photomanager/features/audio_upload/domain/audio_upload_statistics.dart';
+import 'package:photomanager/features/audio_upload/presentation/audio_upload_providers.dart';
+import 'package:photomanager/features/audio_upload/presentation/widgets/audio_upload_control_panel.dart';
+import 'package:photomanager/features/audio_upload/presentation/widgets/audio_upload_response_card.dart';
+import 'package:photomanager/features/audio_upload/presentation/widgets/audio_upload_statistics_card.dart';
+import 'package:photomanager/features/audio_upload/presentation/widgets/audio_upload_status_badge.dart';
 import 'package:photomanager/features/call/domain/call_participant.dart';
 import 'package:photomanager/features/call/domain/call_state.dart';
 import 'package:photomanager/features/call/domain/signaling/call_status.dart';
@@ -129,6 +138,12 @@ class _CallScreenState extends ConsumerState<CallScreen> {
         const AudioStatistics.empty();
     final audioSession = ref.watch(currentAudioSessionProvider);
     final audioChunks = ref.watch(recentAudioChunksProvider);
+    final uploadState = ref.watch(audioUploadStateProvider).valueOrNull ??
+        AudioUploadState.idle;
+    final uploadStatistics =
+        ref.watch(audioUploadStatisticsProvider).valueOrNull ??
+            const AudioUploadStatistics.empty();
+    final uploadResponse = ref.watch(audioUploadResponseProvider).valueOrNull;
     final speechState =
         ref.watch(speechStateProvider).valueOrNull ?? SpeechState.idle;
     final speechStatistics = ref.watch(speechStatisticsProvider).valueOrNull ??
@@ -182,6 +197,10 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                   audioChunks: audioChunks,
                   audioController:
                       ref.read(currentAudioSessionProvider.notifier),
+                  uploadState: uploadState,
+                  uploadStatistics: uploadStatistics,
+                  uploadResponse: uploadResponse,
+                  uploadService: ref.read(audioUploadServiceProvider),
                   speechState: speechState,
                   speechStatistics: speechStatistics,
                   spokenMessage: spokenMessage,
@@ -229,6 +248,10 @@ class _CallContent extends StatelessWidget {
     required this.audioSession,
     required this.audioChunks,
     required this.audioController,
+    required this.uploadState,
+    required this.uploadStatistics,
+    required this.uploadResponse,
+    required this.uploadService,
     required this.speechState,
     required this.speechStatistics,
     required this.spokenMessage,
@@ -250,6 +273,10 @@ class _CallContent extends StatelessWidget {
   final AudioCaptureSession? audioSession;
   final List<AudioChunk> audioChunks;
   final AudioCaptureSessionController audioController;
+  final AudioUploadState uploadState;
+  final AudioUploadStatistics uploadStatistics;
+  final AudioUploadResponse? uploadResponse;
+  final AudioUploadService uploadService;
   final SpeechState speechState;
   final SpeechStatistics speechStatistics;
   final SpeechMessage? spokenMessage;
@@ -319,6 +346,17 @@ class _CallContent extends StatelessWidget {
                     controller: audioController,
                   ),
                   const SizedBox(height: 16),
+                  _AudioUploadSection(
+                    state: uploadState,
+                    statistics: uploadStatistics,
+                    response: uploadResponse,
+                    service: uploadService,
+                    audioBytesLength: audioChunks.fold(
+                      0,
+                      (total, chunk) => total + chunk.sizeBytes,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   _SpeechOutputSection(
                     state: speechState,
                     statistics: speechStatistics,
@@ -360,6 +398,62 @@ class _CallContent extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AudioUploadSection extends StatelessWidget {
+  const _AudioUploadSection({
+    required this.state,
+    required this.statistics,
+    required this.response,
+    required this.service,
+    required this.audioBytesLength,
+  });
+
+  final AudioUploadState state;
+  final AudioUploadStatistics statistics;
+  final AudioUploadResponse? response;
+  final AudioUploadService service;
+  final int audioBytesLength;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Audio Upload',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const Spacer(),
+                AudioUploadStatusBadge(state: state),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Prepared Mock Bytes: $audioBytesLength'),
+            const SizedBox(height: 8),
+            AudioUploadStatisticsCard(statistics: statistics),
+            AudioUploadResponseCard(response: response),
+            const SizedBox(height: 8),
+            AudioUploadControlPanel(
+              state: state,
+              onUpload: () => service.uploadAudio(
+                language: 'vi',
+                audioBytesLength:
+                    audioBytesLength == 0 ? 32000 : audioBytesLength,
+              ),
+              onCancel: service.cancelUpload,
+              onGenerateResponse: service.generateMockResponse,
             ),
           ],
         ),

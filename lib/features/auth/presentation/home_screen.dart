@@ -118,6 +118,13 @@ class HomeScreen extends ConsumerWidget {
                   onPressed: () => context.push(AppRoutes.apiDiagnostics),
                 ),
                 const SizedBox(height: 12),
+                _FeatureButton(
+                  icon: Icons.upload_file_outlined,
+                  label: 'Audio Upload Diagnostics',
+                  onPressed: () =>
+                      context.push(AppRoutes.audioUploadDiagnostics),
+                ),
+                const SizedBox(height: 12),
                 _MediaDiagnosticsCard(
                   cameraState: cameraState,
                   microphoneState: microphoneState,

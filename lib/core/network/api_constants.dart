@@ -6,12 +6,14 @@ abstract final class ApiConstants {
   static const loginEndpoint = '/auth/login';
   static const contactsEndpoint = '/contacts';
   static const speechToPoseEndpoint = '/speech-to-pose';
+  static const speechToPoseRawEndpoint = '/speech-to-pose-raw';
   static const callEndpoint = '/call';
 
   static const availableEndpoints = [
     loginEndpoint,
     contactsEndpoint,
     speechToPoseEndpoint,
+    speechToPoseRawEndpoint,
     callEndpoint,
   ];
 }

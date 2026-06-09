@@ -3,6 +3,7 @@ abstract final class AppRoutes {
   static const login = '/login';
   static const home = '/home';
   static const apiDiagnostics = '/api-diagnostics';
+  static const audioUploadDiagnostics = '/audio-upload-diagnostics';
 
   // Reserved route paths for future feature implementations.
   static const contacts = '/contacts';

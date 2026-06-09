@@ -98,7 +98,7 @@ class ApiService {
     required SpeechRequestDto request,
   }) {
     return upload(
-      ApiConstants.speechToPoseEndpoint,
+      ApiConstants.speechToPoseRawEndpoint,
       bytes: bytes,
       fileName: 'audio.wav',
       contentType: 'audio/wav',

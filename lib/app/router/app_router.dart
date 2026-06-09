@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photomanager/app/router/app_routes.dart';
 import 'package:photomanager/core/network/presentation/api_diagnostics_screen.dart';
+import 'package:photomanager/features/audio_upload/presentation/audio_upload_diagnostics_screen.dart';
 import 'package:photomanager/features/auth/presentation/auth_controller.dart';
 import 'package:photomanager/features/auth/presentation/home_screen.dart';
 import 'package:photomanager/features/auth/presentation/login_screen.dart';
@@ -21,6 +22,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       final requiresAuthentication = state.matchedLocation == AppRoutes.home ||
           state.matchedLocation == AppRoutes.apiDiagnostics ||
+          state.matchedLocation == AppRoutes.audioUploadDiagnostics ||
           state.matchedLocation.startsWith(AppRoutes.contacts) ||
           state.matchedLocation.startsWith('/call') ||
           state.matchedLocation == AppRoutes.incomingCall ||
@@ -52,6 +54,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.apiDiagnostics,
         builder: (context, state) => const ApiDiagnosticsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.audioUploadDiagnostics,
+        builder: (context, state) => const AudioUploadDiagnosticsScreen(),
       ),
       GoRoute(
         path: AppRoutes.contacts,
